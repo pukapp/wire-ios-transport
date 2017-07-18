@@ -56,7 +56,7 @@ static NSTimeInterval const GraceperiodToRenewAccessToken = 40;
 
 @property (nonatomic) NSURL *baseURL;
 @property (nonatomic) ZMPersistentCookieStorage *cookieStorage;
-@property (nonatomic) id<ZMAccessTokenHandlerDelegate> delegate;
+@property (nonatomic, weak) id<ZMAccessTokenHandlerDelegate> delegate;
 
 @property (nonatomic) ZMExponentialBackoff *backoff;
 @property (nonatomic) NSOperationQueue *workQueue;
@@ -118,10 +118,15 @@ static NSTimeInterval const GraceperiodToRenewAccessToken = 40;
     _accessToken = accessToken;
     [self didChangeValueForKey:@"accessToken"];
     
+    id<ZMAccessTokenHandlerDelegate> delegate = self.delegate;
+    if(delegate == nil) {
+        return;
+    }
+    
     if (_accessToken != nil) {
-        [self.delegate handlerDidReceiveAccessToken:self];
+        [delegate handlerDidReceiveAccessToken:self];
     } else {
-        [self.delegate handlerDidClearAccessToken:self];
+        [delegate handlerDidClearAccessToken:self];
     }
 }
 
