@@ -24,7 +24,7 @@ class ViewController: UIViewController {
     }
 
     @IBAction func onTapCreate(_ sender: Any) {
-        
+        self.onTapDestroy(sender)
         self.session = ZMTransportSession(
             baseURL: URL(string: "https://staging-nginz-https.zinfra.io")!,
             websocketURL: URL(string: "https://staging-nginz-https.zinfra.io")!,
@@ -34,6 +34,7 @@ class ViewController: UIViewController {
         
     }
     @IBAction func onTapDestroy(_ sender: Any) {
+        self.session?.tearDown()
         self.session = nil
     }
 }
