@@ -12,9 +12,11 @@ import WireTransport
 class ViewController: UIViewController {
 
     var session: ZMTransportSession? = nil
+    let moc = NSManagedObjectContext(concurrencyType: .privateQueueConcurrencyType)
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        self.moc.createDispatchGroups()
         // Do any additional setup after loading the view, typically from a nib.
     }
 
@@ -28,10 +30,16 @@ class ViewController: UIViewController {
         self.session = ZMTransportSession(
             baseURL: URL(string: "https://staging-nginz-https.zinfra.io")!,
             websocketURL: URL(string: "https://staging-nginz-https.zinfra.io")!,
-            mainGroupQueue: NSManagedObjectContext(concurrencyType: .privateQueueConcurrencyType),
+            mainGroupQueue: self.moc,
             initialAccessToken: ZMAccessToken(),
             application: nil, sharedContainerIdentifier: nil)
         
+        let request = ZMTransportRequest.init(path: "self", method: .methodGET, payload: nil, authentication: .none)
+        request.add(ZMCompletionHandler(on: moc) {
+            print($0)
+        })
+        self.session?.attemptToEnqueueSyncRequest(generator: { return request })
+
     }
     @IBAction func onTapDestroy(_ sender: Any) {
         self.session?.tearDown()
