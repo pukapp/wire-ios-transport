@@ -20,7 +20,6 @@
 @import Security;
 @import WireSystem;
 @import WireUtilities;
-@import UIKit;
 
 #import "ZMTLogging.h"
 #import "ZMPersistentCookieStorage.h"
@@ -92,11 +91,7 @@ static dispatch_queue_t isolationQueue()
 - (NSString *)cookieLabel
 {
     if (_cookieLabel == nil) {
-        NSUUID *deviceIdentifier = [[UIDevice currentDevice] identifierForVendor];
-        if (deviceIdentifier == nil) {
-            deviceIdentifier = [NSUUID UUID];
-        }
-        _cookieLabel = deviceIdentifier.UUIDString;
+        _cookieLabel = [NSUUID UUID].UUIDString;
     }
     return _cookieLabel;
 }
