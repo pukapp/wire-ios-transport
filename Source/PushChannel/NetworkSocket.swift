@@ -69,6 +69,7 @@ import Foundation
     public weak var delegate: NetworkSocketDelegate?
     
     private let queueMarkerKey = DispatchSpecificKey<Void>()
+    private var session: URLSession?
     
     public init(url: URL, delegate: NetworkSocketDelegate?, queue: DispatchQueue, callbackQueue: DispatchQueue, group: ZMSDispatchGroup) {
         self.url = url
@@ -80,6 +81,8 @@ import Foundation
         queue.setSpecific(key: queueMarkerKey, value: ())
         
         super.init()
+        
+        session = URLSession(configuration: URLSessionConfiguration.default, delegate: self, delegateQueue: nil)
     }
     
     deinit {
@@ -105,36 +108,10 @@ import Foundation
         
         let hostName = url.host!
         let port = url.port ?? 443
-        
-        var inStream: InputStream? = nil
-        var outStream: OutputStream? = nil
-        Stream.getStreamsToHost(withName: hostName, port: port, inputStream: &inStream, outputStream: &outStream)
-        inputStream = inStream
-        outputStream = outStream
-        
-        guard let inputStream = self.inputStream, let outputStream = self.outputStream else {
-            fatal("Missing streams")
-        }
-        
-        inputStream.delegate = self
-        outputStream.delegate = self
-        
-        CFReadStreamSetDispatchQueue(inputStream, queue)
-        CFWriteStreamSetDispatchQueue(outputStream, queue)
-        
-        let sslSettings: [AnyHashable: Any] = [kCFStreamSSLPeerName: hostName,
-                                               kCFStreamSSLValidatesCertificateChain: false]
-        
-        inputStream.setProperty(sslSettings, forKey: Stream.PropertyKey(kCFStreamPropertySSLSettings as String))
-        
-        inputStream.setProperty(StreamSocketSecurityLevel.tlSv1,
-                                 forKey: Stream.PropertyKey.socketSecurityLevelKey)
-        
-        inputStream.setProperty(StreamNetworkServiceTypeValue.background,
-                                 forKey: Stream.PropertyKey.networkServiceType)
-        
-        inputStream.open()
-        outputStream.open()
+        let stream = session?.streamTask(withHostName: hostName, port: port)
+        stream?.resume()
+        stream?.startSecureConnection()
+        stream?.captureStreams()
     }
     
     public func close() {
@@ -329,6 +306,38 @@ import Foundation
     }
 }
 
+extension NetworkSocket: URLSessionDataDelegate {
+    
+    public func urlSession(_ session: URLSession, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
+        let protectionSpace = challenge.protectionSpace
+        if protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust {
+            guard verifyServerTrust(protectionSpace.serverTrust, protectionSpace.host) else { return completionHandler(.cancelAuthenticationChallenge, nil) }
+        }
+        completionHandler(.performDefaultHandling, challenge.proposedCredential)
+    }
+    
+}
+
+extension NetworkSocket: URLSessionStreamDelegate {
+    
+    public func urlSession(_ session: URLSession, streamTask: URLSessionStreamTask, didBecome inputStream: InputStream, outputStream: OutputStream) {
+        self.inputStream = inputStream
+        self.outputStream = outputStream
+        
+        CFReadStreamSetDispatchQueue(inputStream, queue)
+        CFWriteStreamSetDispatchQueue(outputStream, queue)
+        
+        inputStream.delegate = self
+        outputStream.delegate = self
+        
+        queue.async {
+            inputStream.open()
+            outputStream.open()
+        }
+    }
+    
+}
+
 extension NetworkSocket: StreamDelegate {
     public func stream(_ aStream: Stream, handle eventCode: Stream.Event) {
         preconditionQueue()
@@ -342,12 +351,12 @@ extension NetworkSocket: StreamDelegate {
                 }, sync: false)
             }
         case (.connected, .hasBytesAvailable):
-            guard aStream == inputStream, checkTrust(for: aStream) else {
+            guard aStream == inputStream else {
                 return
             }
             self.onBytesAvailable()
         case (.connected, .hasSpaceAvailable):
-            guard aStream == outputStream, checkTrust(for: aStream) else {
+            guard aStream == outputStream else {
                 return
             }
             self.onHasSpaceAvailable()
