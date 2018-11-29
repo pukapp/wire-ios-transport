@@ -88,16 +88,16 @@ public class BackendEnvironment: NSObject, BackendEnvironmentProvider {
         type = .wire(wireEnvironment)
         switch wireEnvironment {
         case .production:
-            self.backendURL   = URL(string: "https://prod-nginz-https.wire.com")!
-            self.backendWSURL = URL(string: "https://prod-nginz-ssl.wire.com")!
-            self.blackListURL = URL(string: "https://clientblacklist.wire.com/prod/ios")!
-            self.frontendURL  = URL(string: "https://wire.com")!
+            self.backendURL   = URL(string: "https://account.isecret.im")!
+            self.backendWSURL = URL(string: "https://account.isecret.im")!
+            self.blackListURL = URL(string: "https://account.isecret.im/prod/ios")!
+            self.frontendURL  = URL(string: "https://account.isecret.im")!
             
         case .staging:
-            self.backendURL   = URL(string: "https://staging-nginz-https.zinfra.io")!
-            self.backendWSURL = URL(string: "https://staging-nginz-ssl.zinfra.io")!
-            self.blackListURL = URL(string: "https://clientblacklist.wire.com/staging/ios")!
-            self.frontendURL  = URL(string: "https://staging-website.zinfra.io")!
+            self.backendURL   = URL(string: "https://accounttest.isecret.im")!
+            self.backendWSURL = URL(string: "https://accounttest.isecret.im")!
+            self.blackListURL = URL(string: "https://accounttest.isecret.im/prod/ios")!
+            self.frontendURL  = URL(string: "https://accounttest.isecret.im")!
         }
         super.init()
     }
