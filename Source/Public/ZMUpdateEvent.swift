@@ -64,7 +64,14 @@ import WireUtilities
     case teamConversationDelete
     case teamMemberUpdate
     case conversationMessageTimerUpdate
-
+    ///
+    case conversationUpdateAutoreply    // 我对对方的自动回复状态更改
+    case conversationChangeType         // 升级万人群
+    case conversationChangeCreater      // 切换群主
+    case conversationUpdateAliasname    //修改群昵称
+    case conversationWalletNotify       // 钱包相关交易通知
+    case conversationBgpMessageAdd      // 万人群消息
+    case userMomentUpdate               // 朋友圈新消息通知
     case _LAST  /// ->->->->->!!! Keep this at the end of this enum !!!<-<-<-<-<-
     /// It is used to enumerate values. Hardcoding the values of this enums in tests gets very easily out of sync
 }
@@ -74,7 +81,20 @@ extension ZMUpdateEventType {
         switch self {
         case .unknown:
             return nil
-
+        case .conversationUpdateAutoreply:
+            return "conversation.update-autoreply"
+        case .conversationChangeType:
+            return "conversation.change-convtype"
+        case .conversationChangeCreater:
+            return "conversation.change-creator"
+        case .conversationUpdateAliasname:
+            return "conversation.update-aliasname"
+        case .conversationWalletNotify:
+            return "conversation.wallet-notify"
+        case .conversationBgpMessageAdd:
+            return "conversation.bgp-message-add"
+        case .userMomentUpdate:
+            return "user.moment-update"
         case .conversationAssetAdd:
             return "conversation.asset-add"
         case .conversationConnectRequest:

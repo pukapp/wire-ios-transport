@@ -57,7 +57,7 @@ static NSString * const ZMWebSocketHandshakeErrorDomain = @"ZMWebSocketHandshake
         *error = nil;
     }
     NSData *entireData = (id) self.buffer.objcData;
-    static NSUInteger const MaxResponseLength = 500;
+    static NSUInteger const MaxResponseLength = 1024;
     NSUInteger const length = MIN(entireData.length, MaxResponseLength);
     NSRange responseRange = [entireData rangeOfData:[NSData dataWithBytes:"\r\n\r\n" length:4] options:0 range:NSMakeRange(0, length)];
 
