@@ -72,6 +72,7 @@ import WireUtilities
     case conversationWalletNotify       // 钱包相关交易通知
     case conversationBgpMessageAdd      // 万人群消息
     case userMomentUpdate               // 朋友圈新消息通知
+    case conversationUpdate             // 更新conversation属性  如群聊邀请确认，群头像等等
     case _LAST  /// ->->->->->!!! Keep this at the end of this enum !!!<-<-<-<-<-
     /// It is used to enumerate values. Hardcoding the values of this enums in tests gets very easily out of sync
 }
@@ -157,6 +158,8 @@ extension ZMUpdateEventType {
             return "team.member-update"
         case .conversationMessageTimerUpdate:
             return "conversation.message-timer-update"
+        case .conversationUpdate:
+            return "conversation.update"
 
         case ._LAST:
             return nil
