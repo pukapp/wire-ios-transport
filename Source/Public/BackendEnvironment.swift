@@ -107,10 +107,10 @@ public class BackendEnvironment: NSObject, BackendEnvironmentProvider {
             self.appLetsURL = URL(string: "https://cloud.isecret.im")!
             
         case .staging:
-            self.backendURL   = URL(string: "https://accounttest.isecret.im")!
-            self.backendWSURL = URL(string: "https://accounttest.isecret.im")!
-            self.blackListURL = URL(string: "https://accounttest.isecret.im/prod/ios")!
-            self.frontendURL  = URL(string: "https://accounttest.isecret.im")!
+            self.backendURL   = URL(string: "https://accounttest.pichat.im")!
+            self.backendWSURL = URL(string: "https://accounttest.pichat.im")!
+            self.blackListURL = URL(string: "https://accounttest.pichat.im/prod/ios")!
+            self.frontendURL  = URL(string: "https://accounttest.pichat.im")!
             self.momentURL = URL(string: "https://testm.pichat.im")!
             self.appLetsURL = URL(string: "https://testm.pichat.im")!
         }
