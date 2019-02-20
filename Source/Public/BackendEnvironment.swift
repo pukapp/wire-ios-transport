@@ -28,6 +28,10 @@ import Foundation
     var blackListURL: URL { get }
     /// Frontent URL, used to open the necessary web resources, like password reset.
     var frontendURL: URL { get }
+    
+    var momentURL: URL {get}
+    
+    var appLetsURL:URL {get}
 }
 
 // Swift migration notice: this class conforms to NSObject only to be usable from Obj-C.
@@ -36,12 +40,16 @@ public class CustomBackend: NSObject, BackendEnvironmentProvider {
     public let backendWSURL: URL
     public let blackListURL: URL
     public let frontendURL: URL
+    public let momentURL: URL
+    public let appLetsURL: URL
     
-    public init(backendURL: URL, backendWSURL: URL, blackListURL: URL, frontendURL: URL) {
+    public init(backendURL: URL, backendWSURL: URL, blackListURL: URL, frontendURL: URL, momentURL: URL, appLetsURL: URL) {
         self.backendURL   = backendURL
         self.backendWSURL = backendWSURL
         self.blackListURL = blackListURL
         self.frontendURL  = frontendURL
+        self.momentURL = momentURL
+        self.appLetsURL = appLetsURL
         
         super.init()
     }
@@ -83,6 +91,9 @@ public class BackendEnvironment: NSObject, BackendEnvironmentProvider {
     public let backendWSURL: URL
     public let blackListURL: URL
     public let frontendURL: URL
+    public let momentURL: URL
+    public let appLetsURL:URL
+    
     
     @objc public init(wireEnvironment: WireEnvironmentType) {
         type = .wire(wireEnvironment)
@@ -92,12 +103,16 @@ public class BackendEnvironment: NSObject, BackendEnvironmentProvider {
             self.backendWSURL = URL(string: "https://account.isecret.im")!
             self.blackListURL = URL(string: "https://account.isecret.im/prod/ios")!
             self.frontendURL  = URL(string: "https://account.isecret.im")!
+            self.momentURL = URL(string: "https://m.isecret.im")!
+            self.appLetsURL = URL(string: "https://cloud.isecret.im")!
             
         case .staging:
             self.backendURL   = URL(string: "https://accounttest.isecret.im")!
             self.backendWSURL = URL(string: "https://accounttest.isecret.im")!
             self.blackListURL = URL(string: "https://accounttest.isecret.im/prod/ios")!
             self.frontendURL  = URL(string: "https://accounttest.isecret.im")!
+            self.momentURL = URL(string: "https://testm.pichat.im")!
+            self.appLetsURL = URL(string: "https://testm.pichat.im")!
         }
         super.init()
     }
@@ -108,6 +123,9 @@ public class BackendEnvironment: NSObject, BackendEnvironmentProvider {
         self.backendWSURL = customBackend.backendWSURL
         self.blackListURL = customBackend.blackListURL
         self.frontendURL  = customBackend.frontendURL
+        self.momentURL = customBackend.momentURL
+        self.appLetsURL = customBackend.appLetsURL
+        
         super.init()
     }
     
