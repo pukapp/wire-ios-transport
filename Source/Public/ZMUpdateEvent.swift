@@ -226,7 +226,10 @@ private let zmLog = ZMSLog(tag: "UpdateEvents")
     /// True if the event is encoded with ZMGenericMessage
     open var isGenericMessageEvent: Bool {
         switch self.type {
-        case .conversationOtrMessageAdd, .conversationOtrAssetAdd, .conversationClientMessageAdd:
+        case .conversationOtrMessageAdd,
+             .conversationOtrAssetAdd,
+             .conversationClientMessageAdd,
+             .conversationBgpMessageAdd:
             return true
         default:
             return false
