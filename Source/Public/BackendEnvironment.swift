@@ -111,8 +111,8 @@ public class BackendEnvironment: NSObject, BackendEnvironmentProvider {
             self.backendWSURL = URL(string: "https://accounttest.isecret.im")!
             self.blackListURL = URL(string: "https://accounttest.isecret.im/prod/ios")!
             self.frontendURL  = URL(string: "https://accounttest.isecret.im")!
-            self.momentURL = URL(string: "https://testm.pichat.im")!
-            self.appLetsURL = URL(string: "https://testm.pichat.im")!
+            self.momentURL = URL(string: "https://testm.isecret.im")!
+            self.appLetsURL = URL(string: "https://testm.isecret.im")!
         }
         super.init()
     }
