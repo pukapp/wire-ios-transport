@@ -74,6 +74,7 @@ import WireUtilities
     case userMomentUpdate               // 朋友圈新消息通知
     case conversationUpdate             // 更新conversation属性  如群聊邀请确认，群头像等等
     case conversationMemberJoinask      // 群邀请需确认
+    case conversationUpdateBlockTime    //群主对成员设置禁言状态
     case _LAST  /// ->->->->->!!! Keep this at the end of this enum !!!<-<-<-<-<-
     /// It is used to enumerate values. Hardcoding the values of this enums in tests gets very easily out of sync
 }
@@ -163,6 +164,8 @@ extension ZMUpdateEventType {
             return "conversation.update"
         case .conversationMemberJoinask:
             return "conversation.member-join-ask"
+        case .conversationUpdateBlockTime:
+            return "conversation.update-blocktime"
         case ._LAST:
             return nil
         }
