@@ -71,6 +71,7 @@ import WireUtilities
     case conversationUpdateAliasname    //修改群昵称
     case conversationWalletNotify       // 钱包相关交易通知
     case conversationBgpMessageAdd      // 万人群消息
+    case conversationUserServiceNoticeAdd      // 群应用通知
     case userMomentUpdate               // 朋友圈新消息通知
     case conversationUpdate             // 更新conversation属性  如群聊邀请确认，群头像等等
     case conversationMemberJoinask      // 群邀请需确认
@@ -97,6 +98,8 @@ extension ZMUpdateEventType {
             return "conversation.wallet-notify"
         case .conversationBgpMessageAdd:
             return "conversation.bgp-message-add"
+        case .conversationUserServiceNoticeAdd:
+            return "conversation.user-service-notify"
         case .userMomentUpdate:
             return "user.moment-update"
         case .conversationAssetAdd:
@@ -237,7 +240,8 @@ private let zmLog = ZMSLog(tag: "UpdateEvents")
         case .conversationOtrMessageAdd,
              .conversationOtrAssetAdd,
              .conversationClientMessageAdd,
-             .conversationBgpMessageAdd:
+             .conversationBgpMessageAdd,
+             .conversationUserServiceNoticeAdd:
             return true
         default:
             return false
