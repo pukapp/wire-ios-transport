@@ -1,2 +1,2 @@
 
-github "wireapp/wire-ios-utilities" ~> 33.0
+github "pukapp/wire-ios-utilities" ~> "mergewire"
