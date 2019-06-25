@@ -37,13 +37,13 @@ NSString * const ZMWebSocketErrorDomain = @"ZMWebSocket";
 @interface ZMWebSocket ()
 
 @property (nonatomic) NSURL *URL;
+@property (nonatomic) id<BackendTrustProvider> trustProvider;
 @property (nonatomic) NSMutableArray *dataPendingTransmission;
 @property (nonatomic, weak) id<ZMWebSocketConsumer> consumer;
 @property (atomic) dispatch_queue_t consumerQueue;
 @property (atomic) ZMSDispatchGroup *consumerGroup;
 @property (nonatomic) dispatch_queue_t networkSocketQueue;
 @property (nonatomic) NetworkSocket *networkSocket;
-@property (nonatomic) BOOL handshakeCompleted;
 @property (nonatomic) DataBuffer *inputBuffer;
 @property (nonatomic) ZMWebSocketHandshake *handshake;
 @property (nonatomic) NSError *handshakeError;
@@ -59,13 +59,14 @@ NSString * const ZMWebSocketErrorDomain = @"ZMWebSocket";
 - (instancetype)init
 {
     @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"You should not use -init" userInfo:nil];
-    return [self initWithConsumer:nil queue:nil group:nil networkSocket:nil networkSocketQueue:nil url:nil additionalHeaderFields:nil];
+    return [self initWithConsumer:nil queue:nil group:nil networkSocket:nil networkSocketQueue:nil url:nil trustProvider:nil additionalHeaderFields:nil];
 }
 
 - (instancetype)initWithConsumer:(id<ZMWebSocketConsumer>)consumer
                            queue:(dispatch_queue_t)queue
                            group:(ZMSDispatchGroup *)group
                              url:(NSURL *)url
+                   trustProvider:(id<BackendTrustProvider>)trustProvider
           additionalHeaderFields:(NSDictionary *)additionalHeaderFields;
 {
     return [self initWithConsumer:consumer
@@ -74,6 +75,7 @@ NSString * const ZMWebSocketErrorDomain = @"ZMWebSocket";
                     networkSocket:nil
                networkSocketQueue:nil
                               url:url
+                    trustProvider:trustProvider
            additionalHeaderFields:additionalHeaderFields];
 }
 
@@ -83,6 +85,7 @@ NSString * const ZMWebSocketErrorDomain = @"ZMWebSocket";
                    networkSocket:(NetworkSocket *)networkSocket
               networkSocketQueue:(dispatch_queue_t)networkSocketQueue
                              url:(NSURL *)url
+                   trustProvider:(id<BackendTrustProvider>)trustProvider
           additionalHeaderFields:(NSDictionary *)additionalHeaderFields;
 {
     VerifyReturnNil(consumer != nil);
@@ -90,6 +93,7 @@ NSString * const ZMWebSocketErrorDomain = @"ZMWebSocket";
     self = [super init];
     if (self) {
         self.URL = url;
+        self.trustProvider = trustProvider;
         self.consumer = consumer;
         self.consumerQueue = queue;
         self.consumerGroup = group;
@@ -99,6 +103,7 @@ NSString * const ZMWebSocketErrorDomain = @"ZMWebSocket";
         
         if (networkSocket == nil) {
             networkSocket = [[NetworkSocket alloc] initWithUrl:url
+                                                 trustProvider:self.trustProvider
                                                       delegate:self
                                                          queue:self.networkSocketQueue
                                                  callbackQueue:self.consumerQueue
@@ -175,6 +180,7 @@ NSString * const ZMWebSocketErrorDomain = @"ZMWebSocket";
                 [self.networkSocket writeData:data];
             }];
         }
+
         self.dataPendingTransmission = nil;
     } else if (handshakeCompleted == ZMWebSocketHandshakeError) {
         ZMLogError(@"Failed to parse WebSocket handshake response: %@", error);
@@ -239,16 +245,16 @@ NSString * const ZMWebSocketErrorDomain = @"ZMWebSocket";
 {
     dispatch_data_t frameData = frame.frameData;
     if (frameData != nil) {
-        ZM_WEAK(self);
-        [self safelyDispatchOnQueue:^{
-            ZM_STRONG(self);
-            if (self.handshakeCompleted) {
+        if (self.handshakeCompleted) {
+            ZM_WEAK(self);
+            [self safelyDispatchOnQueue:^{
+                ZM_STRONG(self);
                 [self.networkSocket writeData:(NSData *)frameData];
-            } else {
-                RequireString(self.dataPendingTransmission != nil, "Was already sent & cleared?");
-                [self.dataPendingTransmission addObject:frameData];
-            }
-        }];
+            }];
+        } else {
+            RequireString(self.dataPendingTransmission != nil, "Was already sent & cleared?");
+            [self.dataPendingTransmission addObject:frameData];
+        }
     }
 }
 
@@ -285,6 +291,11 @@ NSString * const ZMWebSocketErrorDomain = @"ZMWebSocket";
     return base64String;
 }
 
+- (BOOL)handshakeCompleted
+{
+    return self.dataPendingTransmission == nil;
+}
+
 @end
 
 
@@ -309,7 +320,6 @@ NSString * const ZMWebSocketErrorDomain = @"ZMWebSocket";
             case ZMWebSocketHandshakeCompleted:
                 {
                     NSHTTPURLResponse *response = self.handshake.response;
-                    self.handshakeCompleted = YES;
                     ZM_WEAK(self);
                     [self safelyDispatchOnQueue:^{
                         ZM_STRONG(self);

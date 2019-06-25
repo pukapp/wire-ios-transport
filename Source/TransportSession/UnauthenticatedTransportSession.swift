@@ -163,7 +163,8 @@ extension UnauthenticatedTransportSession: URLSessionDelegate {
     public func urlSession(_ session: URLSession, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
         let protectionSpace = challenge.protectionSpace
         if protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust {
-            guard verifyServerTrust(protectionSpace.serverTrust, protectionSpace.host) else { return completionHandler(.cancelAuthenticationChallenge, nil) }
+            // It's safe to force-unwrap protectionSpace.serverTrust because according to docs it has to be present with this authentication method
+            guard environment.verifyServerTrust(trust: protectionSpace.serverTrust!, host: protectionSpace.host) else { return completionHandler(.cancelAuthenticationChallenge, nil) }
         }
         completionHandler(.performDefaultHandling, challenge.proposedCredential)
     }
@@ -200,8 +201,7 @@ private enum UserKey: String {
     case user, id
 }
 
-
-@objc public extension ZMTransportResponse {
+extension ZMTransportResponse {
 
     /// Extracts the wire cookie data from the response.
     /// - returns: The encrypted cookie data (using the cookies key) if there is any.
@@ -217,7 +217,7 @@ private enum UserKey: String {
             ?? (data[UserKey.id.rawValue] as? String).flatMap(UUID.init)
     }
 
-    public func extractUserInfo() -> UserInfo? {
+    @objc public func extractUserInfo() -> UserInfo? {
         guard let data = extractCookieData(), let id = extractUserIdentifier() else { return nil }
         return .init(identifier: id, cookieData: data)
     }

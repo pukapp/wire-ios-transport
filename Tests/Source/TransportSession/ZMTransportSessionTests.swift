@@ -40,6 +40,26 @@ import WireTesting
     public func tearDown() { }
 }
 
+@objcMembers public class MockSessionsDirectory: NSObject, URLSessionsDirectory, TearDownCapable {
+    public var foregroundSession: ZMURLSession
+    public var backgroundSession: ZMURLSession
+    public var voipSession: ZMURLSession
+    public var allSessions: [ZMURLSession]
+    
+    public init(foregroundSession: ZMURLSession, backgroundSession: ZMURLSession? = nil, voipSession: ZMURLSession? = nil) {
+        self.foregroundSession = foregroundSession
+        self.backgroundSession = backgroundSession ?? foregroundSession
+        self.voipSession = voipSession ?? foregroundSession
+        allSessions = [foregroundSession, backgroundSession, voipSession].compactMap{ $0 }
+    }
+    
+    var tearDownCalled = false
+    public func tearDown() {
+        tearDownCalled = true
+    }
+
+}
+
 class ZMTransportSessionTests_Initialization: ZMTBaseTest {
     var userIdentifier: UUID!
     var containerIdentifier: String!
@@ -49,6 +69,7 @@ class ZMTransportSessionTests_Initialization: ZMTBaseTest {
     var cookieStorage: ZMPersistentCookieStorage!
     var reachability: FakeReachability!
     var sut: ZMTransportSession!
+    var environment: MockEnvironment!
     
     override func setUp() {
         super.setUp()
@@ -59,7 +80,8 @@ class ZMTransportSessionTests_Initialization: ZMTBaseTest {
         websocketURL = URL(string: serverName)!.appendingPathComponent("websocket")
         cookieStorage = ZMPersistentCookieStorage(forServerName: serverName, userIdentifier: userIdentifier)
         reachability = FakeReachability()
-        sut = ZMTransportSession(baseURL: baseURL, websocketURL: baseURL, cookieStorage: cookieStorage, reachability: reachability, initialAccessToken: nil, applicationGroupIdentifier: containerIdentifier)
+        environment = MockEnvironment()
+        sut = ZMTransportSession(environment: environment, cookieStorage: cookieStorage, reachability: reachability, initialAccessToken: nil, applicationGroupIdentifier: containerIdentifier)
     }
     
     override func tearDown() {
@@ -83,16 +105,16 @@ class ZMTransportSessionTests_Initialization: ZMTBaseTest {
     }
     
     func testThatBackgorundSessionIsBackground() {
-        XCTAssertTrue(sut.urlSessionSwitch.backgroundSession.isBackgroundSession)
-        XCTAssertFalse(sut.urlSessionSwitch.foregroundSession.isBackgroundSession)
+        XCTAssertTrue(sut.sessionsDirectory.backgroundSession.isBackgroundSession)
+        XCTAssertFalse(sut.sessionsDirectory.foregroundSession.isBackgroundSession)
     }
     
     func testThatItConfiguresSessionsCorrectly() {
         // given
         let userID = userIdentifier.transportString()
-        let voipSession = sut.urlSessionSwitch.voipSession
-        let foregroundSession = sut.urlSessionSwitch.foregroundSession
-        let backgroundSession = sut.urlSessionSwitch.backgroundSession
+        let voipSession = sut.sessionsDirectory.voipSession
+        let foregroundSession = sut.sessionsDirectory.foregroundSession
+        let backgroundSession = sut.sessionsDirectory.backgroundSession
 
         // then
         check(identifier: voipSession.identifier, contains: [ZMURLSessionVoipIdentifier, userID])

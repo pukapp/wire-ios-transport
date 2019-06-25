@@ -26,6 +26,7 @@
 #import "ZMURLSession+Internal.h"
 #import "ZMTemporaryFileListForBackgroundRequests.h"
 #import "Fakes.h"
+#import "WireTransport_ios_tests-Swift.h"
 
 @interface ZMURLSessionTests : ZMTBaseTest <ZMURLSessionDelegate, ZMTimerClient>
 
@@ -38,10 +39,13 @@
 @property (nonatomic) NSURLRequest *URLRequestB;
 
 @property (nonatomic) NSUInteger receivedDataCount;
+@property (nonatomic) NSUInteger unsafeConnectionDetectedCount;
 @property (nonatomic) NSMutableArray *receivedResponses;
 @property (nonatomic) NSMutableArray *finishedBackgroundSessions;
 @property (nonatomic) NSMutableArray *completedTasks;
 @property (nonatomic) NSMutableArray *firedTimers;
+@property (nonatomic) MockCertificateTrust *trustProvider;
+
 
 @end
 
@@ -67,12 +71,14 @@ static NSString * const DataKey = @"data";
     self.firedTimers = [NSMutableArray array];
     self.finishedBackgroundSessions = [NSMutableArray array];
     self.receivedDataCount = 0;
-    
+    self.trustProvider = [[MockCertificateTrust alloc] init];
+
     self.queue = [NSOperationQueue zm_serialQueueWithName:self.name];
-    self.sut = (id) [ZMURLSession sessionWithConfiguration:NSURLSessionConfiguration.defaultSessionConfiguration
-                                                  delegate:self
-                                             delegateQueue:self.queue
-                                                identifier:@"test-session"];
+    self.sut = (id) [[ZMURLSession alloc] initWithConfiguration:NSURLSessionConfiguration.defaultSessionConfiguration
+                                                  trustProvider:self.trustProvider
+                                                       delegate:self
+                                                  delegateQueue:self.queue
+                                                     identifier:@"test-session"];
 
     self.URLRequestA = [NSURLRequest requestWithURL:[NSURL URLWithString:@"https://a.example.com/"]];
     self.URLRequestB = [NSURLRequest requestWithURL:[NSURL URLWithString:@"https://b.example.com/"]];
@@ -87,9 +93,11 @@ static NSString * const DataKey = @"data";
     self.completedTasks = nil;
     self.finishedBackgroundSessions = nil;
     self.receivedDataCount = 0;
+    self.unsafeConnectionDetectedCount = 0;
     self.firedTimers = nil;
     [self.sut tearDown];
     self.sut = nil;
+    self.trustProvider = nil;
     [super tearDown];
 }
 
@@ -110,6 +118,13 @@ static NSString * const DataKey = @"data";
 {
     XCTAssertEqual(URLSession, self.sut);
     ++self.receivedDataCount;
+}
+
+- (void)URLSession:(ZMURLSession *)URLSession didDetectUnsafeConnectionToHost:(NSString *)host
+{
+    NOT_USED(URLSession);
+    NOT_USED(host);
+    self.unsafeConnectionDetectedCount += 1;
 }
 
 - (void)URLSession:(__unused ZMURLSession *)URLSession taskDidComplete:(NSURLSessionTask *)task transportRequest:(ZMTransportRequest *)transportRequest responseData:(NSData *)responseData;
@@ -266,6 +281,26 @@ static NSString * const DataKey = @"data";
 
 
 @implementation ZMURLSessionTests (Delegate)
+
+- (void)testItCallTheDelegateWhenItDetectsAnUnsafeConnection
+{
+    // given
+    self.trustProvider.isTrustingServer = NO;
+    
+    MockURLAuthenticationChallengeSender* sender = [[MockURLAuthenticationChallengeSender alloc] init];
+    MockEnvironment *environment = [[MockEnvironment alloc] init];
+    NSURLProtectionSpace *protectionSpace = [[NSURLProtectionSpace alloc] initWithHost:environment.backendURL.host port:443 protocol:@"https" realm:nil authenticationMethod:NSURLAuthenticationMethodServerTrust];
+    NSURLAuthenticationChallenge *challenge = [[NSURLAuthenticationChallenge alloc] initWithProtectionSpace:protectionSpace proposedCredential:nil previousFailureCount:0 failureResponse:nil error:nil sender:sender];
+    
+    // when
+    [self.sut URLSession:self.sut.backingSession didReceiveChallenge:challenge completionHandler:^(NSURLSessionAuthChallengeDisposition disposition, NSURLCredential * _Nullable credential) {
+        NOT_USED(disposition);
+        NOT_USED(credential);
+    }];
+    
+    // then
+    XCTAssertEqual(self.unsafeConnectionDetectedCount, 1);
+}
 
 - (void)testThatItCallsTheDelegateWhenItReceivesAResponse;
 {
@@ -493,7 +528,7 @@ willPerformHTTPRedirection:response
 
 - (void)setupMockBackgroundSession
 {    
-    self.sut = (id) [ZMURLSession sessionWithConfiguration:[NSURLSessionConfiguration ephemeralSessionConfiguration] delegate:self delegateQueue:self.queue identifier:ZMURLSessionBackgroundIdentifier];
+    self.sut = (id) [[ZMURLSession alloc] initWithConfiguration:[NSURLSessionConfiguration ephemeralSessionConfiguration] trustProvider:self.trustProvider delegate:self delegateQueue:self.queue identifier:ZMURLSessionBackgroundIdentifier];
     self.sut.backingSession = [OCMockObject niceMockForClass:NSURLSession.class];
     
     [(NSURLSession *)[[(id)self.sut.backingSession stub] andReturn:[NSURLSessionConfiguration backgroundSessionConfigurationWithIdentifier:@"test-session"]] configuration];
@@ -508,7 +543,7 @@ willPerformHTTPRedirection:response
     WaitForAllGroupsToBeEmpty(0.5);
     [self spinMainQueueWithTimeout:0.1];
     
-    self.sut = (id) [ZMURLSession sessionWithConfiguration:configuration delegate:self delegateQueue:self.queue identifier:ZMURLSessionBackgroundIdentifier];
+    self.sut = (id) [[ZMURLSession alloc] initWithConfiguration:configuration trustProvider:self.trustProvider delegate:self delegateQueue:self.queue identifier:ZMURLSessionBackgroundIdentifier];
     WaitForAllGroupsToBeEmpty(0.5);
     [self spinMainQueueWithTimeout:0.1];
     
@@ -645,7 +680,7 @@ willPerformHTTPRedirection:response
     [self spinMainQueueWithTimeout:0.1];
 
     NSURLSessionConfiguration *configuration = [NSURLSessionConfiguration backgroundSessionConfigurationWithIdentifier:@"test-session"];
-    self.sut = (id) [ZMURLSession sessionWithConfiguration:configuration delegate:self delegateQueue:self.queue identifier:ZMURLSessionBackgroundIdentifier];
+    self.sut = (id) [[ZMURLSession alloc] initWithConfiguration:configuration trustProvider:self.trustProvider delegate:self delegateQueue:self.queue identifier:ZMURLSessionBackgroundIdentifier];
     WaitForAllGroupsToBeEmpty(0.5);
     [self spinMainQueueWithTimeout:0.1];
 

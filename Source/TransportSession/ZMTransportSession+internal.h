@@ -29,18 +29,16 @@
 @class ZMTaskIdentifierMap;
 @class ZMReachability;
 @class ZMAccessToken;
-
-
+@protocol URLSessionsDirectory;
 
 @interface ZMTransportSession ()
 
-- (instancetype)initWithURLSessionSwitch:(ZMURLSessionSwitch *)URLSessionSwitch
+- (instancetype)initWithURLSessionsDirectory:(id<URLSessionsDirectory, TearDownCapable>)directory
                         requestScheduler:(ZMTransportRequestScheduler *)requestScheduler
                             reachability:(id<ReachabilityProvider, TearDownCapable>)reachability
                                    queue:(NSOperationQueue *)queue
                                    group:(ZMSDispatchGroup *)group
-                                 baseURL:(NSURL *)baseURL
-                            websocketURL:(NSURL *)websocketURL
+                             environment:(id<BackendEnvironmentProvider>)environment
                         pushChannelClass:(Class)pushChannelClass
                            cookieStorage:(ZMPersistentCookieStorage *)cookieStorage
                       initialAccessToken:(ZMAccessToken *)initialAccessToken NS_DESIGNATED_INITIALIZER;

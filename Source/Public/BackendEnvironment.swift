@@ -18,158 +18,120 @@
 
 import Foundation
 
-// Swift migration notice: this protocol conforms to NSObjectProtocol only to be usable from Obj-C.
-@objc public protocol BackendEnvironmentProvider: NSObjectProtocol {
-    /// Backend base URL.
-    var backendURL: URL { get }
-    /// URL for SSL WebSocket connection.
-    var backendWSURL: URL { get }
-    /// URL for version blacklist file.
-    var blackListURL: URL { get }
-    /// Frontent URL, used to open the necessary web resources, like password reset.
-    var frontendURL: URL { get }
-    
-    var momentURL: URL {get}
-    
-    var appLetsURL:URL {get}
-}
-
-// Swift migration notice: this class conforms to NSObject only to be usable from Obj-C.
-public class CustomBackend: NSObject, BackendEnvironmentProvider {
-    public let backendURL: URL
-    public let backendWSURL: URL
-    public let blackListURL: URL
-    public let frontendURL: URL
-    public let momentURL: URL
-    public let appLetsURL: URL
-    
-    public init(backendURL: URL, backendWSURL: URL, blackListURL: URL, frontendURL: URL, momentURL: URL, appLetsURL: URL) {
-        self.backendURL   = backendURL
-        self.backendWSURL = backendWSURL
-        self.blackListURL = blackListURL
-        self.frontendURL  = frontendURL
-        self.momentURL = momentURL
-        self.appLetsURL = appLetsURL
-        
-        super.init()
-    }
-    
-    public override var debugDescription: String {
-        return "CustomBackend: \(backendURL) \(backendWSURL) \(blackListURL) \(frontendURL)"
-    }
-}
-
-@objc public enum WireEnvironmentType: Int {
+public enum EnvironmentType: Equatable {
     case production
     case staging
-}
+    case custom(url: URL)
 
-extension WireEnvironmentType {
-    init(userDefaultsValue: String) {
-        switch userDefaultsValue {
-        case "staging":
+    var stringValue: String {
+        switch self {
+        case .production:
+            return "production"
+        case .staging:
+            return "staging"
+        case .custom(url: let url):
+            return "custom-\(url.absoluteString)"
+        }
+    }
+
+    init(stringValue: String) {
+        switch stringValue {
+        case EnvironmentType.staging.stringValue:
             self = .staging
-        case "production", "default":
-            fallthrough
+        case let value where value.hasPrefix("custom-"):
+            let urlString = value.dropFirst("custom-".count)
+            if let url = URL(string: String(urlString)) {
+                self = .custom(url: url)
+            } else {
+                self = .production
+            }
         default:
             self = .production
         }
     }
 }
 
-public enum BackendEnvironmentType {
-    case wire(WireEnvironmentType)
-    case custom(CustomBackend)
-}
-
-// Swift migration notice: this class conforms to NSObject only to be usable from Obj-C.
-@objcMembers
-public class BackendEnvironment: NSObject, BackendEnvironmentProvider {
-    public let type: BackendEnvironmentType
+extension EnvironmentType {
+    private static let defaultsKey = "ZMBackendEnvironmentType"
     
-    public let backendURL: URL
-    public let backendWSURL: URL
-    public let blackListURL: URL
-    public let frontendURL: URL
-    public let momentURL: URL
-    public let appLetsURL:URL
-    
-    
-    @objc public init(wireEnvironment: WireEnvironmentType) {
-        type = .wire(wireEnvironment)
-        switch wireEnvironment {
-        case .production:
-            self.backendURL   = URL(string: "https://account.isecret.im")!
-            self.backendWSURL = URL(string: "https://account.isecret.im")!
-            self.blackListURL = URL(string: "https://account.isecret.im/prod/ios")!
-            self.frontendURL  = URL(string: "https://account.isecret.im")!
-            self.momentURL = URL(string: "https://m.isecret.im")!
-            self.appLetsURL = URL(string: "https://cloud.isecret.im")!
-            
-        case .staging:
-            self.backendURL   = URL(string: "https://accounttest.isecret.im")!
-            self.backendWSURL = URL(string: "https://accounttest.isecret.im")!
-            self.blackListURL = URL(string: "https://accounttest.isecret.im/prod/ios")!
-            self.frontendURL  = URL(string: "https://accounttest.isecret.im")!
-            self.momentURL = URL(string: "https://testm.isecret.im")!
-            self.appLetsURL = URL(string: "https://testm.isecret.im")!
-        }
-        super.init()
-    }
-    
-    public init(customBackend: CustomBackend) {
-        type = .custom(customBackend)
-        self.backendURL   = customBackend.backendURL
-        self.backendWSURL = customBackend.backendWSURL
-        self.blackListURL = customBackend.blackListURL
-        self.frontendURL  = customBackend.frontendURL
-        self.momentURL = customBackend.momentURL
-        self.appLetsURL = customBackend.appLetsURL
-        
-        super.init()
-    }
-    
-    public convenience init(type: BackendEnvironmentType) {
-        switch type {
-        case .custom(let custom):
-            self.init(customBackend: custom)
-        case .wire(let wireEnvironment):
-            self.init(wireEnvironment: wireEnvironment)
+    public init(userDefaults: UserDefaults) {
+        if let value = userDefaults.string(forKey: EnvironmentType.defaultsKey) {
+            self.init(stringValue: value)
+        } else {
+            Logging.backendEnvironment.error("Could not load environment type from user defaults, falling back to production")
+            self = .production
         }
     }
     
-    public convenience init(userDefaults: UserDefaults) {
-        guard let currentSetting = userDefaults.string(forKey: "ZMBackendEnvironmentType") else {
-            self.init(wireEnvironment: .production)
-            return
-        }
-        
-        self.init(wireEnvironment: WireEnvironmentType(userDefaultsValue: currentSetting))
-    }
-    
-    public override var debugDescription: String {
-        return "BackendEnvironment: type \(type.debugDescription)"
+    public func save(in userDefaults: UserDefaults) {
+        userDefaults.setValue(self.stringValue, forKey: EnvironmentType.defaultsKey)
     }
 }
 
-extension WireEnvironmentType: CustomDebugStringConvertible {
-    public var debugDescription: String {
-        switch self {
-        case .production:
-            return "WireEnvironmentType: production"
-        case .staging:
-            return "WireEnvironmentType: staging"
-        }
+public class BackendEnvironment: NSObject {
+    public let title: String
+    let endpoints: BackendEndpointsProvider
+    let certificateTrust: BackendTrustProvider
+    let type: EnvironmentType
+    
+    init(title: String, environmentType: EnvironmentType, endpoints: BackendEndpointsProvider, certificateTrust: BackendTrustProvider) {
+        self.title = title
+        self.type = environmentType
+        self.endpoints = endpoints
+        self.certificateTrust = certificateTrust
     }
+    
+    convenience init?(environmentType: EnvironmentType, data: Data) {
+        struct SerializedData: Decodable {
+            let title: String
+            let endpoints: BackendEndpoints
+            let pinnedKeys: [TrustData]?
+        }
+
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        do {
+            let backendData = try decoder.decode(SerializedData.self, from: data)
+            let pinnedKeys = backendData.pinnedKeys ?? []
+            let certificateTrust = ServerCertificateTrust(trustData: pinnedKeys)
+            self.init(title: backendData.title, environmentType: environmentType, endpoints: backendData.endpoints, certificateTrust: certificateTrust)
+        } catch {
+            Logging.backendEnvironment.error("Could not decode information from data: \(error)")
+            return nil
+        }
+    }    
 }
 
-extension BackendEnvironmentType: CustomDebugStringConvertible {
-    public var debugDescription: String {
-        switch self {
-        case .custom(let customBackend):
-            return "BackendEnvironmentType: custom (\(customBackend.debugDescription))"
-        case .wire(let wireEnvironment):
-            return "BackendEnvironmentType: wire (\(wireEnvironment.debugDescription))"
-        }
+extension BackendEnvironment: BackendEnvironmentProvider {
+    public var environmentType: EnvironmentTypeProvider {
+        return EnvironmentTypeProvider(environmentType: type)
+    }
+    
+    public var backendURL: URL {
+        return endpoints.backendURL
+    }
+    
+    public var backendWSURL: URL {
+        return endpoints.backendWSURL
+    }
+    
+    public var blackListURL: URL {
+        return endpoints.blackListURL
+    }
+    
+    public var teamsURL: URL {
+        return endpoints.teamsURL
+    }
+    
+    public var accountsURL: URL {
+        return endpoints.accountsURL
+    }
+    
+    public var websiteURL: URL {
+        return endpoints.websiteURL
+    }
+    
+    public func verifyServerTrust(trust: SecTrust, host: String?) -> Bool {
+        return certificateTrust.verifyServerTrust(trust: trust, host: host)
     }
 }
