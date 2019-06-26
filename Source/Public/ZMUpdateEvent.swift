@@ -64,6 +64,12 @@ import WireUtilities
     case teamConversationDelete
     case teamMemberUpdate
     case conversationMessageTimerUpdate
+    case conversationReceiptModeUpdate
+    case userDelete
+    case userClientLegalHoldRequest
+    case userPropertiesSet
+    case userPropertiesDelete
+    
     ///
     case conversationUpdateAutoreply    // 我对对方的自动回复状态更改
     case conversationChangeType         // 升级万人群
@@ -132,16 +138,16 @@ extension ZMUpdateEventType {
             return "conversation.code-update"
         case .conversationAccessModeUpdate:
             return "conversation.access-update"
-//        case .conversationReceiptModeUpdate:
-//            return "conversation.receipt-mode-update"
+        case .conversationReceiptModeUpdate:
+            return "conversation.receipt-mode-update"
         case .userConnection:
             return "user.connection"
         case .userNew:
             return "user.new"
         case .userUpdate:
             return "user.update"
-//        case .userDelete:
-//            return "user.delete"
+        case .userDelete:
+            return "user.delete"
         case .userPushRemove:
             return "user.push-remove"
         case .userContactJoin:
@@ -150,8 +156,8 @@ extension ZMUpdateEventType {
             return "user.client-add"
         case .userClientRemove:
             return "user.client-remove"
-//        case .userClientLegalHoldRequest:
-//            return "user.client-legal-hold-request"
+        case .userClientLegalHoldRequest:
+            return "user.client-legal-hold-request"
         case .teamCreate:
             return "team.create"
         case .teamDelete:
@@ -178,10 +184,10 @@ extension ZMUpdateEventType {
             return "conversation.update-blocktime"
         case .conversationServiceNotify:
             return "conversation.conv-service-notify"
-//        case .userPropertiesSet:
-//            return "user.properties-set"
-//        case .userPropertiesDelete:
-//            return "user.properties-delete"
+        case .userPropertiesSet:
+            return "user.properties-set"
+        case .userPropertiesDelete:
+            return "user.properties-delete"
         case ._LAST:
             return nil
         }
