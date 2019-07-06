@@ -131,6 +131,14 @@ extension BackendEnvironment: BackendEnvironmentProvider {
         return endpoints.websiteURL
     }
     
+    public var momentURL: URL {
+        return endpoints.momentURL
+    }
+    
+    public var appLetsURL: URL {
+        return endpoints.appLetsURL
+    }
+    
     public func verifyServerTrust(trust: SecTrust, host: String?) -> Bool {
         return certificateTrust.verifyServerTrust(trust: trust, host: host)
     }

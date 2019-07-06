@@ -59,7 +59,9 @@ extension BackendEnvironment {
                                              blackListURL: self.endpoints.blackListURL,
                                              teamsURL: self.endpoints.teamsURL,
                                              accountsURL: self.endpoints.accountsURL,
-                                             websiteURL: self.endpoints.websiteURL)
+                                             websiteURL: self.endpoints.websiteURL,
+                                             momentURL: self.endpoints.momentURL,
+                                             appLetsURL: self.endpoints.appLetsURL)
             
             let data = SerializedData(title: title, endpoints: endpoints)
             let encoded = try? JSONEncoder().encode(data)
