@@ -252,8 +252,7 @@ private let zmLog = ZMSLog(tag: "UpdateEvents")
         case .conversationOtrMessageAdd,
              .conversationOtrAssetAdd,
              .conversationClientMessageAdd,
-             .conversationBgpMessageAdd,
-             .conversationUserServiceNoticeAdd:
+             .conversationBgpMessageAdd:
             return true
         default:
             return false
