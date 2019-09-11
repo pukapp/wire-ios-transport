@@ -77,7 +77,7 @@ import WireUtilities
     case conversationUpdateAliasname    //修改群昵称
     case conversationWalletNotify       // 钱包相关交易通知
     case conversationBgpMessageAdd      // 万人群消息
-    case conversationUserServiceNoticeAdd      // 群应用通知
+    case conversationUserServiceNoticeAdd      // 服务通知
     case userMomentUpdate               // 朋友圈新消息通知
     case conversationUpdate             // 更新conversation属性  如群聊邀请确认，群头像等等
     case conversationMemberJoinask      // 群邀请需确认
