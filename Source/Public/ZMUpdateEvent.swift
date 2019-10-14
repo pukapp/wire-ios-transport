@@ -33,56 +33,64 @@ import WireUtilities
 
 @objc public enum ZMUpdateEventType : UInt, CaseIterable {
     case unknown = 0
-    case conversationAssetAdd
-    case conversationConnectRequest
-    case conversationCreate
-    case conversationKnock
-    case conversationMemberJoin
-    case conversationMemberLeave
-    case conversationMemberUpdate
-    case conversationMessageAdd
-    case conversationClientMessageAdd
-    case conversationOtrMessageAdd
-    case conversationOtrAssetAdd
-    case conversationRename
-    case conversationTyping
-    case conversationCodeUpdate
-    case conversationAccessModeUpdate
-    case userConnection
-    case userNew
-    case userUpdate
-    case userPushRemove
-    case userContactJoin
-    case userClientAdd
-    case userClientRemove
-    case teamCreate
-    case teamDelete
-    case teamUpdate
-    case teamMemberJoin
-    case teamMemberLeave
-    case teamConversationCreate
-    case teamConversationDelete
-    case teamMemberUpdate
-    case conversationMessageTimerUpdate
-    case conversationReceiptModeUpdate
-    case userDelete
-    case userClientLegalHoldRequest
-    case userPropertiesSet
-    case userPropertiesDelete
+
+    case conversationAssetAdd = 1
+    case conversationConnectRequest = 2
+    case conversationCreate = 3
+    case conversationDelete = 39
+    case conversationKnock = 4
+    case conversationMemberJoin = 5
+    case conversationMemberLeave = 6
+    case conversationMemberUpdate = 7
+    case conversationMessageAdd = 8
+    case conversationClientMessageAdd = 9
+    case conversationOtrMessageAdd = 10
+    case conversationOtrAssetAdd = 11
+    case conversationRename = 12
+    case conversationTyping = 13
+    case conversationCodeUpdate = 14
+    case conversationAccessModeUpdate = 15
+    case conversationMessageTimerUpdate = 31
+    case conversationReceiptModeUpdate = 34
+    case userConnection = 16
+    case userNew = 17
+    case userUpdate = 18
+    case userDelete = 35
+    case userPushRemove = 19
+    case userLegalHoldEnable = 38
+    case userLegalHoldDisable = 37
+    case userLegalHoldRequest = 36
+    case userContactJoin = 20
+    case userClientAdd = 21
+    case userClientRemove = 22
+    case userPropertiesSet = 32
+    case userPropertiesDelete = 33
+    case teamCreate = 23
+    case teamDelete = 24
+    case teamUpdate = 25
+    case teamMemberJoin = 26
+    case teamMemberLeave = 27
+    case teamConversationCreate = 28
+    case teamConversationDelete = 29
+    case teamMemberUpdate = 30
+
+    // Current max value: conversationReceiptModeUpdate = 39
     
+    
+    //
     ///
-    case conversationUpdateAutoreply    // 我对对方的自动回复状态更改
-    case conversationChangeType         // 升级万人群
-    case conversationChangeCreater      // 切换群主
-    case conversationUpdateAliasname    //修改群昵称
-    case conversationWalletNotify       // 钱包相关交易通知
-    case conversationBgpMessageAdd      // 万人群消息
-    case conversationUserServiceNoticeAdd      // 服务通知
-    case userMomentUpdate               // 朋友圈新消息通知
-    case conversationUpdate             // 更新conversation属性  如群聊邀请确认，群头像等等
-    case conversationMemberJoinask      // 群邀请需确认
-    case conversationUpdateBlockTime    //群主对成员设置禁言状态
-    case conversationServiceNotify      //群应用通知
+    case conversationUpdateAutoreply = 100    // 我对对方的自动回复状态更改
+    case conversationChangeType = 101       // 升级万人群
+    case conversationChangeCreater = 102     // 切换群主
+    case conversationUpdateAliasname = 103   //修改群昵称
+    case conversationWalletNotify = 104       // 钱包相关交易通知
+    case conversationBgpMessageAdd = 105      // 万人群消息
+    case conversationUserServiceNoticeAdd = 106      // 服务通知
+    case userMomentUpdate = 107               // 朋友圈新消息通知
+    case conversationUpdate = 108             // 更新conversation属性  如群聊邀请确认，群头像等等
+    case conversationMemberJoinask = 109      // 群邀请需确认
+    case conversationUpdateBlockTime = 110    //群主对成员设置禁言状态
+    case conversationServiceNotify = 111      //群应用通知
     case _LAST  /// ->->->->->!!! Keep this at the end of this enum !!!<-<-<-<-<-
     /// It is used to enumerate values. Hardcoding the values of this enums in tests gets very easily out of sync
 }
@@ -114,6 +122,8 @@ extension ZMUpdateEventType {
             return "conversation.connect-request"
         case .conversationCreate:
             return "conversation.create"
+        case .conversationDelete:
+            return "conversation.delete"
         case .conversationKnock:
             return "conversation.knock"
         case .conversationMemberJoin:
@@ -152,12 +162,16 @@ extension ZMUpdateEventType {
             return "user.push-remove"
         case .userContactJoin:
             return "user.contact-join"
+        case .userLegalHoldEnable:
+            return "user.legalhold-enable"
+        case .userLegalHoldDisable:
+            return "user.legalhold-disable"
+        case .userLegalHoldRequest:
+            return "user.legalhold-request"
         case .userClientAdd:
             return "user.client-add"
         case .userClientRemove:
             return "user.client-remove"
-        case .userClientLegalHoldRequest:
-            return "user.client-legal-hold-request"
         case .teamCreate:
             return "team.create"
         case .teamDelete:
