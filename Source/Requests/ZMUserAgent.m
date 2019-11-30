@@ -67,7 +67,7 @@ static NSString *ZMUserAgentValue = nil;
         
         // app version:
         if(ZMWireAppVersion != nil) {
-            [agent appendFormat:@"wire/%@ ", ZMWireAppVersion];
+            [agent appendFormat:@"secret/%@ ", ZMWireAppVersion];
         }
         
         // zmessaging:
