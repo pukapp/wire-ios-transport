@@ -85,12 +85,12 @@ import WireUtilities
     case conversationUpdateAliasname = 103   //修改群昵称
     case conversationWalletNotify = 104       // 钱包相关交易通知
     case conversationBgpMessageAdd = 105      // 万人群消息
-    case conversationUserServiceNoticeAdd = 106      // 服务通知
+    case conversationServiceMessageAdd = 106      // 公众号通知
     case userMomentUpdate = 107               // 朋友圈新消息通知
     case conversationUpdate = 108             // 更新conversation属性  如群聊邀请确认，群头像等等
     case conversationMemberJoinask = 109      // 群邀请需确认
     case conversationUpdateBlockTime = 110    //群主对成员设置禁言状态
-    case conversationServiceNotify = 111      //群应用通知
+    case conversationAppMessageAdd = 111      //群应用通知
     case _LAST  /// ->->->->->!!! Keep this at the end of this enum !!!<-<-<-<-<-
     /// It is used to enumerate values. Hardcoding the values of this enums in tests gets very easily out of sync
 }
@@ -112,7 +112,7 @@ extension ZMUpdateEventType {
             return "conversation.wallet-notify"
         case .conversationBgpMessageAdd:
             return "conversation.bgp-message-add"
-        case .conversationUserServiceNoticeAdd:
+        case .conversationServiceMessageAdd:
             return "conversation.user-service-notify"
         case .userMomentUpdate:
             return "user.moment-update"
@@ -196,7 +196,7 @@ extension ZMUpdateEventType {
             return "conversation.member-join-ask"
         case .conversationUpdateBlockTime:
             return "conversation.update-blocktime"
-        case .conversationServiceNotify:
+        case .conversationAppMessageAdd:
             return "conversation.conv-service-notify"
         case .userPropertiesSet:
             return "user.properties-set"
