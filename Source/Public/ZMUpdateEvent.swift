@@ -83,7 +83,6 @@ import WireUtilities
     case conversationChangeType = 101       // 升级万人群
     case conversationChangeCreater = 102     // 切换群主
     case conversationUpdateAliasname = 103   //修改群昵称
-    case conversationWalletNotify = 104       // 钱包相关交易通知
     case conversationBgpMessageAdd = 105      // 万人群消息
     case conversationServiceMessageAdd = 106      // 公众号通知
     case userMomentUpdate = 107               // 朋友圈新消息通知
