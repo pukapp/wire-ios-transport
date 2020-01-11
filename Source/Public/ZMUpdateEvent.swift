@@ -109,8 +109,8 @@ extension ZMUpdateEventType {
             return "conversation.change-creator"
         case .conversationUpdateAliasname:
             return "conversation.update-aliasname"
-//        case .conversationWalletNotify:
-//            return "conversation.wallet-notify"
+        case .conversationWalletNotify:
+            return "conversation.wallet-notify"
         case .conversationBgpMessageAdd:
             return "conversation.bgp-message-add"
         case .conversationServiceMessageAdd:
