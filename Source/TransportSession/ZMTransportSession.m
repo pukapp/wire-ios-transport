@@ -58,8 +58,8 @@ static NSInteger const DefaultMaximumRequests = 6;
 @property (nonatomic) BOOL shouldKeepWebsocketOpen;
 
 @property (atomic) BOOL firstRequestFired;
-@property (nonatomic) NSURL *baseURL;
-@property (nonatomic) NSURL *websocketURL;
+//@property (nonatomic) NSURL *baseURL;
+//@property (nonatomic) NSURL *websocketURL;
 @property (nonatomic) id<BackendEnvironmentProvider> environment;
 @property (nonatomic) NSOperationQueue *workQueue;
 @property (nonatomic) ZMPersistentCookieStorage *cookieStorage;

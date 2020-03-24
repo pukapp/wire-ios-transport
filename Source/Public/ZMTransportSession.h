@@ -69,7 +69,8 @@ extern NSString * const ZMTransportSessionNewRequestAvailableNotification;
 @interface ZMTransportSession : NSObject <ZMBackgroundable>
 
 @property (nonatomic, readonly, nullable) ZMAccessToken *accessToken;
-@property (nonatomic, readonly) NSURL *baseURL;
+@property (nonatomic) NSURL *baseURL;
+@property (nonatomic) NSURL *websocketURL;
 @property (nonatomic, readonly) NSOperationQueue *workQueue;
 @property (nonatomic, assign) NSInteger maximumConcurrentRequests;
 @property (nonatomic, readonly) ZMPersistentCookieStorage *cookieStorage;
