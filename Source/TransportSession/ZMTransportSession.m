@@ -426,7 +426,12 @@ static NSInteger const DefaultMaximumRequests = 6;
 
 - (NSURLSessionTask *)suspendedTaskForRequest:(ZMTransportRequest *)request onSession:(ZMURLSession *)session;
 {
-    NSURL *url = [NSURL URLWithString:request.path relativeToURL:self.baseURL];
+    NSURL *baseURL = self.baseURL;
+    ///防封需求，如果是获取对应的ip，应当使用基本的url，否则当对应的ip被封了，由于接口无返回，就会陷入了循环
+    if ([request.path isEqualToString:@"/self/ipproxy"]) {
+        baseURL = self.environment.backendURL;
+    }
+    NSURL *url = [NSURL URLWithString:request.path relativeToURL:baseURL];
     NSAssert(url != nil, @"Nil URL in request");
     
     NSMutableURLRequest *URLRequest = [[NSMutableURLRequest alloc] initWithURL:url];
