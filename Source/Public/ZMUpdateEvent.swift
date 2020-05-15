@@ -94,6 +94,8 @@ import WireUtilities
     case userPasswordReset = 112               //密码重置通知
     case iTaskServiceMessageAdd = 113               //itask公众号通知
     case iTaskDynamicMessageAdd = 114               //itask消息动态服务通知
+    case userNoticeMessage = 115               // 用户推送消息,目前暂时只用于会议相关推送
+    
     case _LAST  /// ->->->->->!!! Keep this at the end of this enum !!!<-<-<-<-<-
     /// It is used to enumerate values. Hardcoding the values of this enums in tests gets very easily out of sync
 }
@@ -211,6 +213,8 @@ extension ZMUpdateEventType {
             return "itask.user-service-notice"
         case .iTaskDynamicMessageAdd:
             return "itask.dynamic-message-notice"
+        case .userNoticeMessage:
+            return "user.notice-message"
         case ._LAST:
             return nil
         }
