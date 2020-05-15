@@ -92,6 +92,9 @@ import WireUtilities
     case conversationUpdateBlockTime = 110    //群主对成员设置禁言状态
     case conversationAppMessageAdd = 111      //群应用通知
     case userPasswordReset = 112               //密码重置通知
+    
+    case userNoticeMessage = 113               // 用户推送消息, 目前仅用于推送第五元素
+    
     case _LAST  /// ->->->->->!!! Keep this at the end of this enum !!!<-<-<-<-<-
     /// It is used to enumerate values. Hardcoding the values of this enums in tests gets very easily out of sync
 }
@@ -205,6 +208,8 @@ extension ZMUpdateEventType {
             return "user.properties-set"
         case .userPropertiesDelete:
             return "user.properties-delete"
+        case .userNoticeMessage:
+            return "user.notice-message"
         case ._LAST:
             return nil
         }
