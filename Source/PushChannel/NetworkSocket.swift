@@ -124,13 +124,15 @@ import Foundation
         CFReadStreamSetDispatchQueue(inputStream, queue)
         CFWriteStreamSetDispatchQueue(outputStream, queue)
         
+        ///这里如果按照原来的顺序的话，那么自建证书是没法绕过的，会一直报sslshake error
+        ///https://stackoverflow.com/questions/4755499/kcfstreampropertysocketsecuritylevel-to-kcfstreamsocketsecuritylevelnegotiatedss
+        inputStream.setProperty(StreamSocketSecurityLevel.tlSv1,
+                                forKey: Stream.PropertyKey.socketSecurityLevelKey)
+        
         let sslSettings: [AnyHashable: Any] = [kCFStreamSSLPeerName: hostName,
                                                kCFStreamSSLValidatesCertificateChain: false]
         
         inputStream.setProperty(sslSettings, forKey: Stream.PropertyKey(kCFStreamPropertySSLSettings as String))
-        
-        inputStream.setProperty(StreamSocketSecurityLevel.tlSv1,
-                                 forKey: Stream.PropertyKey.socketSecurityLevelKey)
         
         inputStream.setProperty(StreamNetworkServiceTypeValue.background,
                                  forKey: Stream.PropertyKey.networkServiceType)
