@@ -83,7 +83,6 @@ import WireUtilities
     case conversationChangeType = 101       // 升级万人群
     case conversationChangeCreater = 102     // 切换群主
     case conversationUpdateAliasname = 103   //修改群昵称
-    case conversationWalletNotify = 104       // 钱包相关交易通知
     case conversationBgpMessageAdd = 105      // 万人群消息
     case conversationServiceMessageAdd = 106      // 公众号通知
     case userMomentUpdate = 107               // 朋友圈新消息通知
@@ -94,6 +93,7 @@ import WireUtilities
     case userPasswordReset = 112               //密码重置通知
     
     case userNoticeMessage = 113               // 用户推送消息, 目前仅用于推送第五元素
+    case conversationJsonMessageAdd = 114      // 服务器推送消息, 用于往已有会话中插入JSON类型消息
     
     case _LAST  /// ->->->->->!!! Keep this at the end of this enum !!!<-<-<-<-<-
     /// It is used to enumerate values. Hardcoding the values of this enums in tests gets very easily out of sync
@@ -112,8 +112,6 @@ extension ZMUpdateEventType {
             return "conversation.change-creator"
         case .conversationUpdateAliasname:
             return "conversation.update-aliasname"
-        case .conversationWalletNotify:
-            return "conversation.wallet-notify"
         case .conversationBgpMessageAdd:
             return "conversation.bgp-message-add"
         case .conversationServiceMessageAdd:
@@ -154,6 +152,8 @@ extension ZMUpdateEventType {
             return "conversation.access-update"
         case .conversationReceiptModeUpdate:
             return "conversation.receipt-mode-update"
+        case .conversationJsonMessageAdd:
+            return "conversation.json-message-add"
         case .userConnection:
             return "user.connection"
         case .userNew:
