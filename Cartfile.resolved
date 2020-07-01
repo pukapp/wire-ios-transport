@@ -1,0 +1,4 @@
+github "pukapp/wire-ios-utilities" "c759b0264cfd3250aec3490e115dab64985c32e3"
+github "wireapp/ocmock" "v3.4.3"
+github "wireapp/wire-ios-system" "31.0.1"
+github "wireapp/wire-ios-testing" "22.0.0"
