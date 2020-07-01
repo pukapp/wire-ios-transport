@@ -23,6 +23,7 @@ public enum EnqueueResult {
 
 public protocol UnauthenticatedTransportSessionProtocol: TearDownCapable {
 
+    func enqueueOneTime(_ request: ZMTransportRequest)
     func enqueueRequest(withGenerator generator: ZMTransportRequestGenerator) -> EnqueueResult
     func tearDown()
     
@@ -81,7 +82,18 @@ final public class UnauthenticatedTransportSession: NSObject, UnauthenticatedTra
         self.environment = environment
         self.reachability = reachability
         super.init()
-        self.session = urlSession ?? URLSession(configuration: .default, delegate: self, delegateQueue: nil)
+        self.session = urlSession ?? URLSession(configuration: .ephemeral, delegate: self, delegateQueue: nil)
+    }
+    
+    
+    /// Enqueues a single request on the internal `URLSession`.
+    ///
+    /// - parameter request: Request which should be enqueued.
+    ///
+    /// The concurrent request limit does apply to when using this method
+    public func enqueueOneTime(_ request: ZMTransportRequest) {
+        _ = increment()
+        enqueueRequest(request)
     }
 
     /// Creates and resumes a request on the internal `URLSession`.
@@ -101,11 +113,18 @@ final public class UnauthenticatedTransportSession: NSObject, UnauthenticatedTra
             decrement(notify: false)
             return .nilRequest
         }
+        
+        enqueueRequest(request)
 
+        return .success
+    }
+    
+    @discardableResult
+    private func enqueueRequest(_ request: ZMTransportRequest) -> DataTaskProtocol {
         guard let urlRequest = URL(string: request.path, relativeTo: baseURL).flatMap(NSMutableURLRequest.init) else { preconditionFailure() }
         urlRequest.configure(with: request)
         request.log()
-
+        
         let task = session.task(with: urlRequest as URLRequest) { [weak self] data, response, error in
             
             var transportResponse: ZMTransportResponse!
@@ -125,9 +144,10 @@ final public class UnauthenticatedTransportSession: NSObject, UnauthenticatedTra
             request.complete(with: transportResponse)
             self?.decrement(notify: true)
         }
-
+        
         task.resume()
-        return .success
+        
+        return task
     }
 
     /// Decrements the number of running requests and posts a new
