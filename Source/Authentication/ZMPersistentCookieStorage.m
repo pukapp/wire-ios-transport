@@ -201,10 +201,12 @@ static dispatch_queue_t isolationQueue()
         if (fetchFromKeychain) {
             id result = nil;
             if (passwordP == nil) {
-                result = [ZMKeychain stringForAccount:self.accountName fallbackToDefaultGroup:YES];
+                id r = [ZMKeychain stringForAccount:self.accountName fallbackToDefaultGroup:YES];
+                result = r;
             }
             else {
-                result = [ZMKeychain dataForAccount:self.accountName fallbackToDefaultGroup:YES];
+                id r = [ZMKeychain dataForAccount:self.accountName fallbackToDefaultGroup:YES];
+                result = r;
             }
             
             if (result != nil) {
