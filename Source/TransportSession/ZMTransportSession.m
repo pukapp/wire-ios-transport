@@ -299,6 +299,7 @@ static NSInteger const DefaultMaximumRequests = 6;
 #if DEBUG
 - (void)dealloc
 {
+    NSLog(@"ZMTransportSession deinit");
     RequireString(self.tornDown, "Did not call tearDown on %p", (__bridge void *) self);
 }
 #endif

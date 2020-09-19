@@ -29,6 +29,7 @@ import WireUtilities
     case webSocket
     case pushNotification
     case download
+    case nseNotification
 }
 
 @objc public enum ZMUpdateEventType : UInt, CaseIterable {
