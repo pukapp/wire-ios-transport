@@ -53,6 +53,7 @@ public enum EnvironmentType: Equatable {
 
 extension EnvironmentType {
     public static let defaultsKey = "ZMBackendEnvironmentType"
+    public static let groupIdentifier = "ApplicationGroupIdentifier"
     
     public init(userDefaults: UserDefaults) {
         if let value = userDefaults.string(forKey: EnvironmentType.defaultsKey) {
