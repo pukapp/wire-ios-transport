@@ -175,7 +175,7 @@ typedef union websocket_header_t {
             .rsv3    = 0,
             .fin     = 1, // single frame
             .payload = 0,
-            .mask    = 0,
+            .mask    = 1,
         }
     };
     return dispatch_data_create(&wshead, sizeof(wshead), NULL, DISPATCH_DATA_DESTRUCTOR_DEFAULT);
