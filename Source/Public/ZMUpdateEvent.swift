@@ -31,6 +31,32 @@ import WireUtilities
     case download
     case nseNotification
 }
+/*
+ # 0, 普通群
+ # 1, selfConv
+ # 2, 一对一
+ # 3, 好友申请中
+ # 4, 前端使用
+ # 5, 万人群
+ # 6, ITask群
+ */
+@objc public enum ZMUpdateEventConvType : Int {
+    case normal = 0
+    case `self` = 1
+    case oneToOne = 2
+    case contactRequest = 3
+    case webUse = 4
+    case huge = 5
+    case iTask = 6
+    
+    init(code: Int) {
+        if let type = ZMUpdateEventConvType(rawValue: code) {
+            self = type
+            return
+        }
+        self = .normal
+    }
+}
 
 @objc public enum ZMUpdateEventType : UInt, CaseIterable {
     case unknown = 0
@@ -251,6 +277,7 @@ private let zmLog = ZMSLog(tag: "UpdateEvents")
 
     open var payload: [AnyHashable : Any]
     open var type: ZMUpdateEventType
+    open var convType: ZMUpdateEventConvType
     open var source: ZMUpdateEventSource
     open var uuid: UUID?
 
@@ -300,11 +327,16 @@ private let zmLog = ZMSLog(tag: "UpdateEvents")
     open var debugInformation: String {
         return debugInformationArray.joined(separator: "\n")
     }
+    
+    open var isHuge: Bool {
+        return self.convType == .huge
+    }
 
 
     public init?(uuid: UUID?, payload: [AnyHashable : Any]?, transient: Bool, decrypted: Bool, source: ZMUpdateEventSource) {
         guard let payload = payload else { return nil }
         guard let payloadType = payload["type"] as? String else { return nil }
+        guard let code = payload["convtype"] as? Int else { return nil }
 
         self.uuid = uuid
         self.payload = payload
@@ -312,8 +344,10 @@ private let zmLog = ZMSLog(tag: "UpdateEvents")
         self.wasDecrypted = decrypted
 
         let eventType = ZMUpdateEventType(string: payloadType)
+        let convType = ZMUpdateEventConvType(code: code)
         guard eventType != .unknown else { return nil }
         self.type = eventType
+        self.convType = convType
         self.source = source
         wasDecrypted = false
     }
