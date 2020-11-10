@@ -89,6 +89,7 @@ static NSInteger const DefaultMaximumRequests = 6;
 @property (nonatomic) id reachabilityObserverToken;
 @property (nonatomic) ZMAtomicInteger *numberOfRequestsInProgress;
 
+@property (nonatomic) NSMutableOrderedSet *prepareRequests;
 @end
 
 
@@ -239,6 +240,7 @@ static NSInteger const DefaultMaximumRequests = 6;
         self.baseURL = environment.backendURL;
         self.websocketURL = environment.backendWSURL;
         self.numberOfRequestsInProgress = [[ZMAtomicInteger alloc] initWithInteger:0];
+        self.prepareRequests = [NSMutableOrderedSet orderedSet];
         
         self.workQueue = queue;
         _workGroup = group;
@@ -361,16 +363,27 @@ static NSInteger const DefaultMaximumRequests = 6;
     NSInteger const newCount = [self.numberOfRequestsInProgress increment];
     if (limit < newCount) {
         ZMLogInfo(@"Reached limit of %ld concurrent requests. Not enqueueing.", (long)limit);
+        ZMTransportRequest *request = requestGenerator();
+        if (request != nil) {
+            [self.prepareRequests addObject:request];
+        }
         [self decrementNumberOfRequestsInProgressAndNotifyOperationLoop:NO];
         return [ZMTransportEnqueueResult resultDidHaveLessRequestsThanMax:NO didGenerateNonNullRequest:NO];
     } else {
-        ZMTransportRequest *request = requestGenerator();
-        if (request == nil) {
-            [self decrementNumberOfRequestsInProgressAndNotifyOperationLoop:NO];
-            return [ZMTransportEnqueueResult resultDidHaveLessRequestsThanMax:YES didGenerateNonNullRequest:NO];
+        ZMTransportRequest *generateRequest = requestGenerator();
+        if (generateRequest) {
+            [self enqueueTransportRequest:generateRequest];
+            return [ZMTransportEnqueueResult resultDidHaveLessRequestsThanMax:YES didGenerateNonNullRequest:YES];
         }
-        [self enqueueTransportRequest:request];
-        return [ZMTransportEnqueueResult resultDidHaveLessRequestsThanMax:YES didGenerateNonNullRequest:YES];
+        ZMTransportRequest *prepareRequest = [self.prepareRequests firstObject];
+        if (prepareRequest) {
+            [self.prepareRequests removeObject:prepareRequest];
+            [self enqueueTransportRequest:prepareRequest];
+            return [ZMTransportEnqueueResult resultDidHaveLessRequestsThanMax:YES didGenerateNonNullRequest:YES];
+        }
+        
+        [self decrementNumberOfRequestsInProgressAndNotifyOperationLoop:NO];
+        return [ZMTransportEnqueueResult resultDidHaveLessRequestsThanMax:YES didGenerateNonNullRequest:NO];
     }
 }
 
