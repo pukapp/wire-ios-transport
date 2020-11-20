@@ -49,8 +49,12 @@ import WireUtilities
     case huge = 5
     case iTask = 6
     
-    init(code: Int) {
-        if let type = ZMUpdateEventConvType(rawValue: code) {
+    init(code: Int?) {
+        guard let cint = code else {
+            self = .normal
+            return
+        }
+        if let type = ZMUpdateEventConvType(rawValue: cint) {
             self = type
             return
         }
@@ -336,7 +340,7 @@ private let zmLog = ZMSLog(tag: "UpdateEvents")
     public init?(uuid: UUID?, payload: [AnyHashable : Any]?, transient: Bool, decrypted: Bool, source: ZMUpdateEventSource) {
         guard let payload = payload else { return nil }
         guard let payloadType = payload["type"] as? String else { return nil }
-        guard let code = payload["convtype"] as? Int else { return nil }
+        
 
         self.uuid = uuid
         self.payload = payload
@@ -344,7 +348,10 @@ private let zmLog = ZMSLog(tag: "UpdateEvents")
         self.wasDecrypted = decrypted
 
         let eventType = ZMUpdateEventType(string: payloadType)
+        
+        let code = payload["convtype"] as? Int
         let convType = ZMUpdateEventConvType(code: code)
+
         guard eventType != .unknown else { return nil }
         self.type = eventType
         self.convType = convType
