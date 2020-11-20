@@ -365,7 +365,11 @@ static NSInteger const DefaultMaximumRequests = 6;
         ZMLogInfo(@"Reached limit of %ld concurrent requests. Not enqueueing.", (long)limit);
         ZMTransportRequest *request = requestGenerator();
         if (request != nil) {
-            [self.prepareRequests addObject:request];
+            if ([request.path containsString:@"v3"] && request.method == ZMMethodGET) {
+                [self.prepareRequests addObject:request];
+            } else {
+                [self.prepareRequests insertObject:request atIndex:0];
+            }
         }
         [self decrementNumberOfRequestsInProgressAndNotifyOperationLoop:NO];
         return [ZMTransportEnqueueResult resultDidHaveLessRequestsThanMax:NO didGenerateNonNullRequest:NO];
