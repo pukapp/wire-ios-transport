@@ -284,6 +284,10 @@ private let zmLog = ZMSLog(tag: "UpdateEvents")
     open var convType: ZMUpdateEventConvType
     open var source: ZMUpdateEventSource
     open var uuid: UUID?
+    
+    // 这个id  目前仅用于群加人和删人系统消息的id  避免请求和拉取事件重复创建相同的加人删人系统消息
+    // 后续有业务用到 请注释
+    open var eid: UUID?
 
     var debugInformationArray: [String] = []
     /// True if the event will not appear in the notification stream
@@ -337,7 +341,7 @@ private let zmLog = ZMSLog(tag: "UpdateEvents")
     }
 
 
-    public init?(uuid: UUID?, payload: [AnyHashable : Any]?, transient: Bool, decrypted: Bool, source: ZMUpdateEventSource) {
+    public init?(uuid: UUID?, payload: [AnyHashable : Any]?, transient: Bool, decrypted: Bool, source: ZMUpdateEventSource, eid: UUID? = nil) {
         guard let payload = payload else { return nil }
         guard let payloadType = payload["type"] as? String else { return nil }
         
@@ -357,6 +361,14 @@ private let zmLog = ZMSLog(tag: "UpdateEvents")
         self.convType = convType
         self.source = source
         wasDecrypted = false
+
+        if let e = eid {
+            self.eid = e
+        }
+        
+        if let e = payload["eid"] as? String {
+            self.eid = UUID(uuidString: e)
+        }
     }
 
     open class func eventsArray(fromPushChannelData transportData: ZMTransportData) -> [ZMUpdateEvent]? {
@@ -400,8 +412,11 @@ private let zmLog = ZMSLog(tag: "UpdateEvents")
         // Some payloads are wrapped inside "event" key (e.g. removing bot from conversation)
         // Check for this before
         let innerPayload = (dictionary?["event"] as? [AnyHashable : Any]) ?? dictionary
-
-        self.init(uuid: uuid, payload: innerPayload, transient: false, decrypted: false, source: .download)
+        var euid: UUID?
+        if let eid = innerPayload?["eid"] as? String, let euuid = UUID(uuidString: eid) {
+            euid = euuid
+        }
+        self.init(uuid: uuid, payload: innerPayload, transient: false, decrypted: false, source: .download, eid: euid)
     }
 
 
