@@ -50,6 +50,9 @@ NSString * const ZMWebSocketErrorDomain = @"ZMWebSocket";
 @property (nonatomic, copy) NSDictionary* additionalHeaderFields;
 @property (nonatomic) ZMAtomicInteger *openFlag;
 
+//新增这两个属性，存储着延续帧首帧的数据类型，以及延续帧的总data
+@property (nonatomic) ZMWebSocketFrameType wholeFrameType;
+@property (nonatomic) NSData *wholeFramePayload;
 @end
 
 
@@ -350,7 +353,12 @@ NSString * const ZMWebSocketErrorDomain = @"ZMWebSocket";
     }
     
     NSError *frameError;
-    ZMWebSocketFrame *frame = [[ZMWebSocketFrame alloc] initWithDataBuffer:self.inputBuffer error:&frameError];
+    ZMWebSocketFrame *frame;
+    if (self.wholeFramePayload) {
+        frame = [[ZMWebSocketFrame alloc] initWithPreviousFrameType:self.wholeFrameType previousPayload:self.wholeFramePayload dataBuffer:self.inputBuffer error:&frameError];
+    } else {
+        frame = [[ZMWebSocketFrame alloc] initWithDataBuffer:self.inputBuffer error:&frameError];
+    }
     if (frame == nil) {
         if (![frameError.domain isEqualToString:ZMWebSocketFrameErrorDomain] ||
             (frameError.code != ZMWebSocketFrameErrorCodeDataTooShort))
@@ -359,6 +367,14 @@ NSString * const ZMWebSocketErrorDomain = @"ZMWebSocket";
         }
         return NO;
     } else {
+        //先判断当前帧是否已经是完整的一帧，如果没有，则进行一次存储之后，继续读取数据
+        if (!frame.isWholeFrame) {
+            self.wholeFrameType = frame.frameType;
+            self.wholeFramePayload = [frame.payload copy];
+            return YES;
+        } else {
+            self.wholeFramePayload = nil;
+        }
         switch (frame.frameType) {
             case ZMWebSocketFrameTypeText: {
                 ZM_WEAK(self);

@@ -72,8 +72,8 @@ typedef union websocket_header_t {
 @interface ZMWebSocketFrame ()
 
 @property (nonatomic) ZMWebSocketFrameType frameType;
-@property (nonatomic, copy) NSData *payload;
-
+@property (nonatomic) NSData *payload;
+@property (nonatomic) BOOL isWholeFrame;
 @end
 
 
@@ -90,6 +90,19 @@ typedef union websocket_header_t {
 {
     self = [super init];
     if (self) {
+        if (! [self parseDataBuffer:dataBuffer error:error]) {
+            return nil;
+        }
+    }
+    return self;
+}
+
+- (instancetype)initWithPreviousFrameType:(ZMWebSocketFrameType)frameType previousPayload: (NSData*)payload dataBuffer:(DataBuffer *)dataBuffer  error:(NSError **)error
+{
+    self = [super init];
+    if (self) {
+        self.frameType = frameType;
+        self.payload = [[NSMutableData alloc] initWithData:payload];
         if (! [self parseDataBuffer:dataBuffer error:error]) {
             return nil;
         }
@@ -175,7 +188,7 @@ typedef union websocket_header_t {
             .rsv3    = 0,
             .fin     = 1, // single frame
             .payload = 0,
-            .mask    = 1,
+            .mask    = 0,
         }
     };
     return dispatch_data_create(&wshead, sizeof(wshead), NULL, DISPATCH_DATA_DESTRUCTOR_DEFAULT);
@@ -267,6 +280,10 @@ typedef union websocket_header_t {
             self.frameType = ZMWebSocketFrameTypeClose;
             break;
         }
+        case CONTINUATION: {
+            //这里已经在初始化的时候已经对frameType赋值了
+            break;
+        }
         default: {
             if (error) {
                 *error = [[self class] parseError];
@@ -340,21 +357,27 @@ typedef union websocket_header_t {
         if ((self.frameType == ZMWebSocketFrameTypeText) ||
             (self.frameType == ZMWebSocketFrameTypeBinary))
         {
-            if (! ws.fin) {
-                // Should we keep the data in this case?!?
-            } else {
-                self.payload = [frameData subdataWithRange:NSMakeRange(ws.headerSize, messageLength - ws.headerSize)];
-                if (ws.mask) {
-                    size_t const l = self.payload.length;
-                    uint8_t maskedBytes[l];
-                    [self.payload getBytes:maskedBytes length:l];
-                    for (size_t i = 0; i < l; ++i) {
-                        maskedBytes[i] ^= ws.maskingKey[i & 0x3];
-                    }
-                    self.payload = [NSData dataWithBytes:maskedBytes length:l];
+            //先获取当前帧的数据
+            NSData *currentPayload;
+            if (ws.mask) {
+                size_t const l = self.payload.length;
+                uint8_t maskedBytes[l];
+                [self.payload getBytes:maskedBytes length:l];
+                for (size_t i = 0; i < l; ++i) {
+                    maskedBytes[i] ^= ws.maskingKey[i & 0x3];
                 }
+                currentPayload = [NSData dataWithBytes:maskedBytes length:l];
+            } else {
+                currentPayload = [frameData subdataWithRange:NSMakeRange(ws.headerSize, messageLength - ws.headerSize)];
+            }
+            //需要拼接data，即上一帧是延续帧
+            if (self.payload && self.payload.length > 0) {
+                [(NSMutableData* )self.payload appendData:currentPayload];
+            } else {
+                self.payload = currentPayload;
             }
         }
+        self.isWholeFrame = ws.fin;
     }
     return YES;
 }

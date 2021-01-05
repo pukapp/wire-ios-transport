@@ -51,6 +51,12 @@ typedef NS_ENUM(NSInteger, ZMWebSocketFrameErrorCode) {
 /// @c ZMWebSocketFrameErrorCodeDataTooShort or @c ZMWebSocketFrameErrorCodeParseError
 - (instancetype)initWithDataBuffer:(DataBuffer *)dataBuffer error:(NSError **)error NS_DESIGNATED_INITIALIZER ZM_NON_NULL(1, 2);
 
+/// The passed in error will be set to @c ZMWebSocketFrameErrorDomain and one of
+/// 新增frameType,记录延续帧之前的数据类型
+/// 新增previousPayload，来实现websocket延续帧的功能
+/// @c ZMWebSocketFrameErrorCodeDataTooShort or @c ZMWebSocketFrameErrorCodeParseError
+- (instancetype)initWithPreviousFrameType:(ZMWebSocketFrameType)frameType previousPayload: (NSData*)payload dataBuffer:(DataBuffer *)dataBuffer  error:(NSError **)error NS_DESIGNATED_INITIALIZER;
+
 /// Creates a binary frame with the given payload.
 - (instancetype)initWithBinaryFrameWithPayload:(NSData *)payload NS_DESIGNATED_INITIALIZER;
 - (instancetype)initWithTextFrameWithPayload:(NSString *)payload NS_DESIGNATED_INITIALIZER;
@@ -58,8 +64,8 @@ typedef NS_ENUM(NSInteger, ZMWebSocketFrameErrorCode) {
 - (instancetype)initWithPingFrame NS_DESIGNATED_INITIALIZER;
 
 @property (nonatomic, readonly) ZMWebSocketFrameType frameType;
-@property (nonatomic, readonly, copy) NSData *payload;
-
+@property (nonatomic, readonly) NSData *payload;
+@property (nonatomic, readonly) BOOL isWholeFrame;//是否是完整的一帧数据
 @property (nonatomic, readonly) dispatch_data_t frameData;
 
 @end
