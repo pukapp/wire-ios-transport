@@ -210,27 +210,46 @@ typedef union websocket_header_t {
             .rsv3    = 0,
             .fin     = 1, // single frame
             .payload = 0,
-            .mask    = 0,
+            .mask    = 1,//由于是从客户端发送给服务端的数据，所以mask必须置为1，防止服务端无法解析数据
         }
     };
     
     size_t const length = self.payload.length;
+    //生成随机的掩码
+    uint8_t *mask_key = (uint8_t*)malloc(sizeof(uint32_t));
+    int reslut = SecRandomCopyBytes(kSecRandomDefault, sizeof(uint32_t), (uint8_t *)mask_key);
+    if (reslut != 0) {
+        NSLog(@"websocket get maskKey failure");
+    }
+    dispatch_data_t maskKey = dispatch_data_create(mask_key, sizeof(uint32_t), NULL, DISPATCH_DATA_DESTRUCTOR_DEFAULT);
+    
+    uint8_t *needMasked_payload = (uint8_t *)[self.payload bytes];
+    for (size_t i = 0; i < length; i++) {
+        needMasked_payload[i] = needMasked_payload[i] ^ mask_key[i % sizeof(uint32_t)];
+    }
     
     CFDataRef cfdata = CFBridgingRetain(self.payload);
-    dispatch_data_t payload = dispatch_data_create(self.payload.bytes, self.payload.length, dispatch_get_global_queue(0, 0), ^{
+    dispatch_data_t payload = dispatch_data_create(needMasked_payload, length, dispatch_get_global_queue(0, 0), ^{
         CFRelease(cfdata);
     });
     
     if (length < 126) {
-        wshead.s.length = (uint8_t) length;
+        wshead.bits.payload = (unsigned int)length;
         dispatch_data_t header = dispatch_data_create(&wshead, sizeof(wshead), NULL, DISPATCH_DATA_DESTRUCTOR_DEFAULT);
-        return dispatch_data_create_concat(header, payload);
+        dispatch_data_t headerAndMask = dispatch_data_create_concat(header, maskKey);
+        
+        return dispatch_data_create_concat(headerAndMask, payload);
     } else if (length <= UINT16_MAX) {
+        wshead.bits.payload = (unsigned int)126;
+        
         uint16_t const l = (uint16_t) length;
+        uint16_t bigL =  CFSwapInt16BigToHost(l);
         dispatch_data_t h1 = dispatch_data_create(&wshead, sizeof(wshead), NULL, DISPATCH_DATA_DESTRUCTOR_DEFAULT);
-        dispatch_data_t h2 = dispatch_data_create(&l, sizeof(l), NULL, DISPATCH_DATA_DESTRUCTOR_DEFAULT);
+        dispatch_data_t h2 = dispatch_data_create(&bigL, sizeof(bigL), NULL, DISPATCH_DATA_DESTRUCTOR_DEFAULT);
         dispatch_data_t header = dispatch_data_create_concat(h1, h2);
-        return dispatch_data_create_concat(header, payload);
+        dispatch_data_t headerAndMask = dispatch_data_create_concat(header, maskKey);
+        
+        return dispatch_data_create_concat(headerAndMask, payload);
     } else {
         return nil;
     }

@@ -49,7 +49,7 @@
 		5499FFCA1B31C66D00835C8B /* ZMPushChannelConnection.m in Sources */ = {isa = PBXBuildFile; fileRef = 5499FF741B31C66C00835C8B /* ZMPushChannelConnection.m */; };
 		5499FFD01B31C66D00835C8B /* ZMTransportPushChannel.h in Headers */ = {isa = PBXBuildFile; fileRef = 5499FF771B31C66C00835C8B /* ZMTransportPushChannel.h */; };
 		5499FFD21B31C66D00835C8B /* ZMTransportPushChannel.m in Sources */ = {isa = PBXBuildFile; fileRef = 5499FF781B31C66C00835C8B /* ZMTransportPushChannel.m */; };
-		5499FFD41B31C66D00835C8B /* ZMWebSocket.h in Headers */ = {isa = PBXBuildFile; fileRef = 5499FF791B31C66C00835C8B /* ZMWebSocket.h */; };
+		5499FFD41B31C66D00835C8B /* ZMWebSocket.h in Headers */ = {isa = PBXBuildFile; fileRef = 5499FF791B31C66C00835C8B /* ZMWebSocket.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		5499FFD61B31C66D00835C8B /* ZMWebSocket.m in Sources */ = {isa = PBXBuildFile; fileRef = 5499FF7A1B31C66C00835C8B /* ZMWebSocket.m */; };
 		5499FFD81B31C66D00835C8B /* ZMWebSocketFrame.h in Headers */ = {isa = PBXBuildFile; fileRef = 5499FF7B1B31C66C00835C8B /* ZMWebSocketFrame.h */; };
 		5499FFDA1B31C66D00835C8B /* ZMWebSocketFrame.m in Sources */ = {isa = PBXBuildFile; fileRef = 5499FF7C1B31C66C00835C8B /* ZMWebSocketFrame.m */; };
@@ -848,7 +848,6 @@
 			files = (
 				5499FFD01B31C66D00835C8B /* ZMTransportPushChannel.h in Headers */,
 				5499FFDC1B31C66D00835C8B /* ZMWebSocketHandshake.h in Headers */,
-				5499FFD41B31C66D00835C8B /* ZMWebSocket.h in Headers */,
 				BF453F1A1CC6377200403E1C /* ZMRequestCancellation.h in Headers */,
 				160C31231E5B28A10012E4BC /* ZMPushChannel.h in Headers */,
 				54CA15711B32F2C1008D3787 /* ZMPersistentCookieStorage.h in Headers */,
@@ -876,6 +875,7 @@
 				54CA15DF1B32F791008D3787 /* WireTransport.h in Headers */,
 				54CA15831B32F2C1008D3787 /* ZMURLSession.h in Headers */,
 				5499FFC61B31C66D00835C8B /* ZMPushChannelConnection+WebSocket.h in Headers */,
+				5499FFD41B31C66D00835C8B /* ZMWebSocket.h in Headers */,
 				09CC4AC11B7CE44900201C63 /* ZMTaskIdentifierMap.h in Headers */,
 				EF1A09A41FF6AC7500F89634 /* ZMPersistentCookieStorage+Testing.h in Headers */,
 				54CA15511B32F2C1008D3787 /* ZMAccessTokenHandler.h in Headers */,

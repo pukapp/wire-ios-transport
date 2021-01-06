@@ -124,13 +124,15 @@ import Foundation
         CFReadStreamSetDispatchQueue(inputStream, queue)
         CFWriteStreamSetDispatchQueue(outputStream, queue)
         
+        // TODO: 需要将其放置于 kCFStreamPropertySSLSettings 之前。否则不是正规的https证书的话websocket会验证失败 https://stackoverflow.com/questions/4755499/kcfstreampropertysocketsecuritylevel-to-kcfstreamsocketsecuritylevelnegotiatedss
+        inputStream.setProperty(StreamSocketSecurityLevel.tlSv1,
+                                 forKey: Stream.PropertyKey.socketSecurityLevelKey)
+        
         let sslSettings: [AnyHashable: Any] = [kCFStreamSSLPeerName: hostName,
                                                kCFStreamSSLValidatesCertificateChain: false]
         
         inputStream.setProperty(sslSettings, forKey: Stream.PropertyKey(kCFStreamPropertySSLSettings as String))
         
-        inputStream.setProperty(StreamSocketSecurityLevel.tlSv1,
-                                 forKey: Stream.PropertyKey.socketSecurityLevelKey)
         
         inputStream.setProperty(StreamNetworkServiceTypeValue.background,
                                  forKey: Stream.PropertyKey.networkServiceType)
