@@ -140,6 +140,10 @@ extension BackendEnvironment: BackendEnvironmentProvider {
         return endpoints.appLetsURL
     }
     
+    public var secretHouseWSURL: URL {
+        return endpoints.secretHouseWSURL
+    }
+    
     public func verifyServerTrust(trust: SecTrust, host: String?) -> Bool {
         return certificateTrust.verifyServerTrust(trust: trust, host: host)
     }

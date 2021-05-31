@@ -27,8 +27,9 @@ class BackendEndpoints: NSObject, BackendEndpointsProvider, Codable {
     let websiteURL: URL
     let momentURL: URL
     let appLetsURL: URL
+    let secretHouseWSURL: URL
     
-    init(backendURL: URL, backendWSURL: URL, blackListURL: URL, teamsURL: URL, accountsURL: URL, websiteURL: URL, momentURL: URL, appLetsURL: URL) {
+    init(backendURL: URL, backendWSURL: URL, blackListURL: URL, teamsURL: URL, accountsURL: URL, websiteURL: URL, momentURL: URL, appLetsURL: URL, secretHouseWSURL: URL) {
         self.backendURL = backendURL
         self.backendWSURL = backendWSURL
         self.blackListURL = blackListURL
@@ -37,6 +38,7 @@ class BackendEndpoints: NSObject, BackendEndpointsProvider, Codable {
         self.websiteURL = websiteURL
         self.momentURL = momentURL
         self.appLetsURL = appLetsURL
+        self.secretHouseWSURL = secretHouseWSURL
         super.init()
     }
 }

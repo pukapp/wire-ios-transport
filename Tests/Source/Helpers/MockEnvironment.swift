@@ -32,5 +32,6 @@ public class MockEnvironment: NSObject, BackendEnvironmentProvider {
     public var websiteURL: URL = URL(string: "http://example.com")!
     public var momentURL: URL = URL(string: "http://example.com")!
     public var appLetsURL: URL = URL(string: "http://example.com")!
+    public var secretHouseWSURL: URL = URL(string: "http://example.com")!
     public var environmentType: EnvironmentTypeProvider = EnvironmentTypeProvider(environmentType: .production)
 }

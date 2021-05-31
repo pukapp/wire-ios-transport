@@ -45,6 +45,8 @@ import Foundation
     var websiteURL: URL { get }
     var momentURL: URL { get }
     var appLetsURL: URL { get }
+    // URL for SecretHouse SSL WebSocket connection.
+    var secretHouseWSURL: URL { get }
 }
 
 @objc public protocol BackendEnvironmentProvider: BackendTrustProvider, BackendEndpointsProvider {
