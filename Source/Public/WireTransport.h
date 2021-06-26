@@ -36,6 +36,7 @@ FOUNDATION_EXPORT const unsigned char TransportVersionString[];
 #import <WireTransport/ZMTransportRequestScheduler.h>
 #import <WireTransport/ZMTransportResponse.h>
 #import <WireTransport/ZMTransportSession.h>
+#import <WireTransport/ZMBackTransportSession.h>
 #import <WireTransport/ZMTaskIdentifierMap.h>
 #import <WireTransport/ZMURLSession.h>
 #import <WireTransport/ZMUserAgent.h>
