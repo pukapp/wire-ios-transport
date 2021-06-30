@@ -81,6 +81,12 @@ typedef NS_ENUM(int8_t, ZMTransportAccept) {
     ZMTransportAcceptImage, ///< Maps to "Accept: image/*" HTTP header
 };
 
+typedef NS_ENUM(uint8_t, ZMTransportRequestPriorityLevel) {
+    ZMTransportRequestHighLevel,
+    ZMTransportRequestNormalLevel,
+    ZMTransportRequestLowLevel,
+};
+
 
 @interface ZMTransportRequest : NSObject
 
@@ -129,6 +135,7 @@ typedef NS_ENUM(int8_t, ZMTransportAccept) {
 @property (nonatomic, readonly) BOOL shouldUseVoipSession;
 
 @property (nonatomic, readonly, copy, nullable) NSDictionary *contentDisposition; ///< C.f. <https://tools.ietf.org/html/rfc2183>
+@property (nonatomic) ZMTransportRequestPriorityLevel priorityLevel;
 
 - (void)addTaskCreatedHandler:(ZMTaskCreatedHandler *)taskCreatedHandler NS_SWIFT_NAME(add(_:));
 - (void)addCompletionHandler:(ZMCompletionHandler *)completionHandler NS_SWIFT_NAME(add(_:));

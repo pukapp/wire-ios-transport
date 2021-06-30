@@ -89,7 +89,9 @@ static NSInteger const DefaultMaximumRequests = 6;
 @property (nonatomic) id reachabilityObserverToken;
 @property (nonatomic) ZMAtomicInteger *numberOfRequestsInProgress;
 
-@property (nonatomic) NSMutableOrderedSet *prepareRequests;
+@property (nonatomic) NSMutableOrderedSet *prepareHighLevelRequests;
+@property (nonatomic) NSMutableOrderedSet *prepareNormalLevelRequests;
+@property (nonatomic) NSMutableOrderedSet *prepareLowLevelRequests;
 @end
 
 
@@ -157,6 +159,7 @@ static NSInteger const DefaultMaximumRequests = 6;
     configuration.timeoutIntervalForRequest = 60; 
     configuration.timeoutIntervalForResource = 12 * 60;
     configuration.networkServiceType = NSURLNetworkServiceTypeVoIP;
+    configuration.HTTPShouldUsePipelining = YES;
     [self setUpConfiguration:configuration];
     return configuration;
 }
@@ -240,7 +243,9 @@ static NSInteger const DefaultMaximumRequests = 6;
         self.baseURL = environment.backendURL;
         self.websocketURL = environment.backendWSURL;
         self.numberOfRequestsInProgress = [[ZMAtomicInteger alloc] initWithInteger:0];
-        self.prepareRequests = [NSMutableOrderedSet orderedSet];
+        self.prepareHighLevelRequests = [NSMutableOrderedSet orderedSet];
+        self.prepareNormalLevelRequests = [NSMutableOrderedSet orderedSet];
+        self.prepareLowLevelRequests = [NSMutableOrderedSet orderedSet];
         
         self.workQueue = queue;
         _workGroup = group;
@@ -345,7 +350,6 @@ static NSInteger const DefaultMaximumRequests = 6;
 
 - (void)enqueueOneTimeRequest:(ZMTransportRequest *)searchRequest;
 {
-    [self.numberOfRequestsInProgress increment];
     [self enqueueTransportRequest:searchRequest];
 }
 
@@ -360,33 +364,52 @@ static NSInteger const DefaultMaximumRequests = 6;
     self.firstRequestFired = YES;
     
     NSInteger const limit = MIN(self.maximumConcurrentRequests, self.requestScheduler.concurrentRequestCountLimit);
-    NSInteger const newCount = [self.numberOfRequestsInProgress increment];
-    if (limit < newCount) {
+    if (self.numberOfRequestsInProgress.rawValue > limit) {
         ZMLogInfo(@"Reached limit of %ld concurrent requests. Not enqueueing.", (long)limit);
         ZMTransportRequest *request = requestGenerator();
         if (request != nil) {
-            if ([request.path containsString:@"v3"] && request.method == ZMMethodGET) {
-                [self.prepareRequests addObject:request];
-            } else {
-                [self.prepareRequests insertObject:request atIndex:0];
+            switch (request.priorityLevel) {
+                case ZMTransportRequestHighLevel:
+                    [self.prepareHighLevelRequests addObject:request];
+                    break;
+                case ZMTransportRequestNormalLevel:
+                    [self.prepareNormalLevelRequests addObject:request];
+                    break;
+                case ZMTransportRequestLowLevel:
+                    [self.prepareLowLevelRequests addObject:request];
+                    break;
             }
         }
-        [self decrementNumberOfRequestsInProgressAndNotifyOperationLoop:NO];
         return [ZMTransportEnqueueResult resultDidHaveLessRequestsThanMax:NO didGenerateNonNullRequest:NO];
     } else {
+        ZMTransportRequest *highRequest = [self.prepareHighLevelRequests firstObject];
+        if (highRequest) {
+            [self.prepareHighLevelRequests removeObject:highRequest];
+            [self enqueueTransportRequest:highRequest];
+            return [ZMTransportEnqueueResult resultDidHaveLessRequestsThanMax:YES didGenerateNonNullRequest:YES];
+        }
+        
         ZMTransportRequest *generateRequest = requestGenerator();
         if (generateRequest) {
             [self enqueueTransportRequest:generateRequest];
             return [ZMTransportEnqueueResult resultDidHaveLessRequestsThanMax:YES didGenerateNonNullRequest:YES];
         }
-        ZMTransportRequest *prepareRequest = [self.prepareRequests firstObject];
-        if (prepareRequest) {
-            [self.prepareRequests removeObject:prepareRequest];
-            [self enqueueTransportRequest:prepareRequest];
+        
+        ZMTransportRequest *normalRequest = [self.prepareNormalLevelRequests firstObject];
+        if (normalRequest) {
+            [self.prepareNormalLevelRequests removeObject:normalRequest];
+            [self enqueueTransportRequest:normalRequest];
             return [ZMTransportEnqueueResult resultDidHaveLessRequestsThanMax:YES didGenerateNonNullRequest:YES];
         }
         
-        [self decrementNumberOfRequestsInProgressAndNotifyOperationLoop:NO];
+        ZMTransportRequest *lowRequest = [self.prepareLowLevelRequests firstObject];
+        if (lowRequest) {
+            [self.prepareLowLevelRequests removeObject:lowRequest];
+            [self enqueueTransportRequest:lowRequest];
+            return [ZMTransportEnqueueResult resultDidHaveLessRequestsThanMax:YES didGenerateNonNullRequest:YES];
+        }
+        
+        
         return [ZMTransportEnqueueResult resultDidHaveLessRequestsThanMax:YES didGenerateNonNullRequest:NO];
     }
 }
@@ -418,11 +441,12 @@ static NSInteger const DefaultMaximumRequests = 6;
         NSError *error = [NSError errorWithDomain:ZMTransportSessionErrorDomain code:ZMTransportSessionErrorCodeRequestExpired userInfo:nil];
         ZMTransportResponse *expiredResponse = [ZMTransportResponse responseWithTransportSessionError:error];
         [request completeWithResponse:expiredResponse];
-        [self decrementNumberOfRequestsInProgressAndNotifyOperationLoop:YES]; // TODO aren't we decrementing too late here?
         return;
     }
     
     // TODO: Need to set up a timer such that we can fail expired requests before they hit this point of the code -> namely when offline
+    
+    [self.numberOfRequestsInProgress increment];
     
     ZMURLSession *session = request.shouldUseOnlyBackgroundSession ? self.sessionsDirectory.backgroundSession :
                             request.shouldUseVoipSession ? self.sessionsDirectory.voipSession : self.sessionsDirectory.foregroundSession;
@@ -686,7 +710,6 @@ static NSInteger const DefaultMaximumRequests = 6;
         NSError *error = [NSError tryAgainLaterErrorWithUserInfo:userInfo];
         ZMTransportResponse *tryAgainRespose = [ZMTransportResponse responseWithTransportSessionError:error];
         [request completeWithResponse:tryAgainRespose];
-        [self decrementNumberOfRequestsInProgressAndNotifyOperationLoop:YES];
     }
 }
 

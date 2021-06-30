@@ -184,6 +184,7 @@ typedef NS_ENUM(NSUInteger, ZMTransportRequestSessionType) {
         self.shouldCompress = shouldCompress;
         self.debugInformation = [NSMutableArray array];
         self.contentDebugInformationHash = 0;
+        self.priorityLevel = ZMTransportRequestNormalLevel;
     }
     return self;
 }
